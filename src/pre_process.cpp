@@ -1,33 +1,9 @@
 #include "../include/pre_process.hpp"
+#include <algorithm>
 #include <tuple>
+#include <iostream>
 
-Macro::Macro(std::string lab, std::vector<RawLine> code) {
-  innerCode = code;
-  label = lab;
-}
-
-std::string Macro::getLabel() { return label; }
-
-std::vector<RawLine> Macro::expand() { return innerCode; }
-
-If::If(bool cond, RawLine code) {
-  innerCode = code;
-  condition = cond;
-}
-
-bool If::shouldExpand() { return condition; }
-
-RawLine If::expand() { return innerCode; }
-
-Equ::Equ(std::string lab, int32_t v) {
-  label = lab;
-  value = v;
-  token = RawToken{std::to_string(v), Address{AddressType::Absolute, 0}, Location{"", 0}};
-}
-
-std::string Equ::getLabel() { return label; }
-
-RawToken Equ::expand() { return token; }
+using std::cout;
 
 Macro buildMacro(std::vector<RawLine>::iterator macroStart, std::vector<RawLine>::iterator macroEnd) {
   std::string label = macroStart->getRawTokens()[0].text;
@@ -38,9 +14,65 @@ Macro buildMacro(std::vector<RawLine>::iterator macroStart, std::vector<RawLine>
 
 Equ buildEqu(RawLine rawLine) {
   std::string label = rawLine.getRawTokens()[0].text;
+  label.pop_back();
   int32_t value = std::stoi(rawLine.getRawTokens()[2].text);
   return Equ(label, value);
 }
+
+If buildConditional(RawLine conditionalLine, RawLine codeLine) {
+  std::string condLabel = conditionalLine.getRawTokens()[1].text;
+  return If(condLabel, codeLine);
+}
+
+/***********************
+ *        Macro        *
+ ***********************/
+
+Macro::Macro(std::string lab, std::vector<RawLine> code) {
+  innerCode = code;
+  label = lab;
+}
+
+std::string Macro::getLabel() { return label; }
+
+std::vector<RawLine> Macro::expand() { return innerCode; }
+
+/*******************
+ *       If        *
+ *******************/
+
+If::If(std::string lab, RawLine code) {
+  innerCode = code;
+  label = lab;
+}
+
+bool If::setCond(int32_t val) { return cond = val; }
+
+bool If::shouldExpand() { return cond; }
+
+std::string If::getLabel() { return label; }
+
+RawLine If::expand() { return innerCode; }
+
+/*********************
+ *        Equ        *
+ *********************/
+
+Equ::Equ(std::string lab, int32_t v) {
+  label = lab;
+  value = v;
+  token = RawToken{std::to_string(v), Address{AddressType::Absolute, 0}, Location{"", 0}};
+}
+
+int32_t Equ::getValue() { return value; }
+
+std::string Equ::getLabel() { return label; }
+
+RawToken Equ::expand() { return token; }
+
+/*******************************
+ *         PreProcessor        *
+ *******************************/
 
 PreProcessor::PreProcessor(std::vector<RawLine> l) {
   std::vector<RawLine> directiveFreeLines;
@@ -57,6 +89,13 @@ PreProcessor::PreProcessor(std::vector<RawLine> l) {
       rLine = macroEnd;
     } else if(LINE_DEFINES_EQU(rLine)) {
       vals.push_back(buildEqu(*rLine));
+    } else if(LINE_DEFINES_CONDITIONAL(rLine)) {
+      directiveFreeLines.push_back(*rLine);
+
+      RawLine conditionalCodeLine = *(std::next(rLine, 1));
+      conditionals.push_back(buildConditional(*rLine, conditionalCodeLine));
+
+      rLine = std::next(rLine, 1);
     } else {
       directiveFreeLines.push_back(*rLine);
     }
@@ -66,31 +105,66 @@ PreProcessor::PreProcessor(std::vector<RawLine> l) {
   for(auto rLine = directiveFreeLines.begin(); rLine != directiveFreeLines.end(); ++rLine) {
     std::vector<RawToken> lineRawTokens = rLine->getRawTokens();
 
-    if(lineRawTokens.size() == 1) {
+    if(LINE_DEFINES_CONDITIONAL(rLine)) {
+      std::string conditionalLabel = lineRawTokens.back().text;
+      auto conditionalVal = this->findVal(conditionalLabel);
+      auto conditional = this->findConditional(conditionalLabel);
+
+      if(conditional != conditionals.end() && conditionalVal != vals.end()) {
+        conditional->setCond(conditionalVal->getValue());
+
+        if(conditional->shouldExpand()) {
+          preProcessedLines.push_back(conditional->expand());
+        }
+      } else {
+        preProcessedLines.push_back(*rLine);
+      }
+    } else if(lineRawTokens.size() == 1) {
       std::string tokenLabel = lineRawTokens.front().text;
-      auto macro = std::find_if(mdt.begin(), mdt.end(), 
-          [tokenLabel](Macro m) {
-            return m.getLabel() == tokenLabel;
-          });
+      auto macro = this->findMacro(tokenLabel);
 
       if(macro != mdt.end()) {
-        preProcessedLines.insert(preProcessedLines.end(), macro->expand().begin(), macro->expand().end());
+        std::vector<RawLine> macroCode = macro->expand();
+        preProcessedLines.insert(preProcessedLines.end(), macroCode.begin(), macroCode.end());
+      } else {
+        preProcessedLines.push_back(*rLine);
       }
     } else {
       std::vector<Equ> v = vals;
-      // find all tokens in raw line that have an equ label matchin in vals
-      auto valToken = std::find_if(lineRawTokens.begin(), lineRawTokens.end(), [v](RawToken t) { 
-        return std::count(v.begin(), v.end(), [t](Equ equ) { return equ.getLabel() == t.text; });
-      });
 
-      if(valToken != lineRawTokens.end()) {
-        auto equ = std::find_if(v.begin(), v.end(), [valToken](Equ equ) { return equ.getLabel() == valToken->text; })
-        (*valToken) = ;
+      for(auto rToken = lineRawTokens.begin(); rToken != lineRawTokens.end(); ++rToken) {
+        auto rTokenVal = this->findVal(rToken->text);
+        if(rTokenVal != vals.end()) {
+          (*rToken) = rTokenVal->expand();
+        }
       }
-    }
 
-    for(auto rToken = lineRawTokens.begin(); rToken != lineRawTokens.end(); ++rToken) {
+      rLine->setRawTokens(lineRawTokens);
+      preProcessedLines.push_back(*rLine);
     }
   }
+
+  lines = preProcessedLines;
 }
+
+std::vector<Macro>::iterator PreProcessor::findMacro(std::string tokenLabel) {
+  return std::find_if(mdt.begin(), mdt.end(), [tokenLabel](Macro m) {
+      return m.getLabel() == tokenLabel;
+      }); 
+}
+
+std::vector<If>::iterator PreProcessor::findConditional(std::string conditionalLabel) {
+   return std::find_if(conditionals.begin(), conditionals.end(), 
+          [conditionalLabel](If cond) {
+          return cond.getLabel() == conditionalLabel;
+      }); 
+}
+
+std::vector<Equ>::iterator PreProcessor::findVal(std::string valToken) {
+  return std::find_if(vals.begin(), vals.end(), [valToken](Equ e) { 
+      return e.getLabel() == valToken; 
+      });
+}
+
+std::vector<RawLine> PreProcessor::getPreProcessedLines() { return lines; }
 

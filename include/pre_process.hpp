@@ -3,6 +3,7 @@
 
 #include "text_object.hpp"
 #include <map>
+#include <cstdint>
 
 #define LINE_DEFINES_MACRO(line) line->getRawTokens().size() == 2 && line->getRawTokens()[1].text == "MACRO"
 #define LINE_ENDS_MACRO(line) line.getRawTokens().size() == 1 && line.getRawTokens()[0].text == "ENDMACRO"
@@ -23,11 +24,14 @@ class Macro {
 
 class If {
   private:
-    bool condition;
+    std::string label;
+    bool cond;
     RawLine innerCode;
   public:
-    If(bool cond, RawLine code);
+    If(std::string lab, RawLine code);
+    bool setCond(int32_t val);
     bool shouldExpand();
+    std::string getLabel();
     RawLine expand();
 };
 
@@ -38,6 +42,7 @@ class Equ {
     int32_t value;
   public:
     Equ(std::string label, int32_t v);
+    int32_t getValue();
     std::string getLabel();
     RawToken expand();
 };
@@ -46,10 +51,14 @@ class PreProcessor {
   private:
     std::vector<RawLine> lines;
     std::vector<Macro> mdt;
+    std::vector<If> conditionals;
     std::vector<Equ> vals;
+    std::vector<Macro>::iterator findMacro(std::string label);
+    std::vector<If>::iterator findConditional(std::string label);
+    std::vector<Equ>::iterator findVal(std::string label);
   public:
     PreProcessor(std::vector<RawLine> l);
-    std::vector<RawLine> getPreProcessesLines();
+    std::vector<RawLine> getPreProcessedLines();
 };
 
 

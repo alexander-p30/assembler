@@ -11,7 +11,7 @@ std::string purgeComments(std::string text) {
   return std::sregex_iterator(text.begin(), text.end(), separator)->str();
 };
 
-std::vector<RawToken> splitRawTokens(std::string text, Address baseAddress, Location lineLocation) {
+std::vector<RawToken> splitRawTokens(std::string text, Location lineLocation) {
   const std::regex separators(RAW_TOKEN_SEPARATORS);
   std::vector<RawToken> rawTokens = std::vector<RawToken>{};
 
@@ -20,8 +20,7 @@ std::vector<RawToken> splitRawTokens(std::string text, Address baseAddress, Loca
   auto end = std::sregex_iterator();
 
   for (std::sregex_iterator i = begin; i != end; i++) {
-    baseAddress.number++;
-    RawToken rawToken = RawToken{i->str(), baseAddress, lineLocation};
+    RawToken rawToken = RawToken{i->str(), lineLocation};
     rawTokens.push_back(rawToken);
   }
 
@@ -34,15 +33,13 @@ std::vector<RawToken> splitRawTokens(std::string text, Address baseAddress, Loca
 
 RawLine::RawLine(std::string rawLineText, Address addr, Location loc) {
   text = rawLineText;
-  address = addr;
   location = loc;
   currentRawTokenIndex = 0;
-  rawTokens = splitRawTokens(rawLineText, addr, loc);
+  rawTokens = splitRawTokens(rawLineText, loc);
 }
 
 RawLine::RawLine(const RawLine& rLine) {
   text = rLine.text;
-  address = rLine.address;
   location = rLine.location;
   currentRawTokenIndex = rLine.currentRawTokenIndex;
   rawTokens = rLine.rawTokens;
@@ -54,6 +51,14 @@ RawLine::RawLine() { }
  * Return raw tokens parsed from field `text`.
  */
 std::vector<RawToken> RawLine::getRawTokens() { return rawTokens; }
+
+/*
+ * Return updates the RawLine's raw token vector with the parameter.
+ */
+std::vector<RawToken> RawLine::setRawTokens(std::vector<RawToken> newTokens) {
+  rawTokens = newTokens;
+  return newTokens; 
+}
 
 /*
  * Returns the current raw token.

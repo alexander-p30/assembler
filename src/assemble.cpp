@@ -47,9 +47,9 @@ std::vector<Token> specializeRawTokens(std::vector<RawToken> rawTokens) {
 
 ProgramLine::ProgramLine(std::vector<Token> lineTokens) { tokens = lineTokens; }
 
-TwoPassAssembler::TwoPassAssembler(Parser p) {
-  parser = p;
-  std::vector<RawLine> rawLines = parser.getRawLines();
+TwoPassAssembler::TwoPassAssembler(PreProcessor p, Address baseAddress) {
+  preProcessor = p;
+  std::vector<RawLine> rawLines = preProcessor.getPreProcessedLines();
   programLines = std::vector<ProgramLine>{};
 
   for (auto rawLine = rawLines.begin(); rawLine != rawLines.end(); ++rawLine) {

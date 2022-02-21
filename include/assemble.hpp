@@ -2,6 +2,7 @@
 #define ASSEMBLE_H
 
 #include "parse.hpp"
+#include "pre_process.hpp"
 #include "text_object.hpp"
 #include "error.hpp"
 #include <vector>
@@ -47,7 +48,7 @@ typedef std::vector<Analyzer> analysis;
 
 class TwoPassAssembler {
   private:
-    Parser parser;
+    PreProcessor preProcessor;
     std::vector<ProgramLine> programLines;
   public:
     TwoPassAssembler(Parser p);

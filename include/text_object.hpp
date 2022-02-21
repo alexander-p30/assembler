@@ -39,6 +39,7 @@ public:
   RawLine(const RawLine& rLine);
   RawLine();
   std::vector<RawToken> getRawTokens();
+  std::vector<RawToken> setRawTokens(std::vector<RawToken> newTokens);
   RawToken getCurrentRawToken();
   RawToken nextRawToken();
   bool isAtLastToken();
