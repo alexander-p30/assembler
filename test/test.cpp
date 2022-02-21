@@ -6,31 +6,32 @@
 using namespace std;
 
 void inspect(Parser p, int x);
-void inspect(Line l, int x);
+void inspect(RawLine l, int x);
 void inspect(RawToken t, int x);
 void inspect(Address a, int x);
 void inspect(AddressType t, int x);
+void inspect(Location a, int x);
 
 void inspect(Parser p, int indent) {
   std::string ind = string(indent * 2, ' ');
-  std::vector<Line> lines = p.getLines();
+  std::vector<RawLine> rawLines = p.getRawLines();
   cout << ind + "Parser{\n";
   cout << ind + "  fileText: " << "\"" << p.getText() << "\"" <<  ",\n"; 
-  cout << ind + "  fileLines: {\n"; 
-  for_each(lines.begin(), lines.end(),
-           [indent](Line line) { 
-           inspect(line, indent + 2); 
+  cout << ind + "  fileRawLines: {\n"; 
+  for_each(rawLines.begin(), rawLines.end(),
+           [indent](RawLine rawLine) { 
+           inspect(rawLine, indent + 2); 
            });
-  cout << ind + "  },\n  currentLine: \n"; 
-  inspect(p.getCurrentLine(), indent + 1);
+  cout << ind + "  },\n  currentRawLine: \n"; 
+  inspect(p.getCurrentRawLine(), indent + 1);
   cout << ind + "}\n"; 
 }
 
-void inspect(Line line, int indent) {
+void inspect(RawLine rawLine, int indent) {
   std::string ind = string(indent * 2, ' ');
-  std::vector<RawToken> rawTokens = line.getRawTokens();
-  cout << ind + "Line{\n";
-  cout << ind + "  text: " << "\"" << line.getText() << "\"" <<  ",\n"; 
+  std::vector<RawToken> rawTokens = rawLine.getRawTokens();
+  cout << ind + "RawLine{\n";
+  cout << ind + "  text: " << "\"" << rawLine.getText() << "\"" <<  ",\n"; 
   cout << ind + "  rawTokens: {\n"; 
   for_each(rawTokens.begin(), rawTokens.end(),
            [indent](RawToken rawToken) { 
@@ -39,10 +40,13 @@ void inspect(Line line, int indent) {
            });
   cout << ind + "  },\n";
   cout << ind + "  address: "; 
-  inspect(line.getAddress(), 0);
+  inspect(rawLine.getAddress(), 0);
   cout << ",\n";
-  cout << ind + "  nextLineAddress: "; 
-  inspect(line.nextLineAddress(), 0);
+  cout << ind + "  location: "; 
+  inspect(rawLine.getLocation(), 0);
+  cout << ",\n";
+  cout << ind + "  nextRawLineAddress: "; 
+  inspect(rawLine.nextRawLineAddress(), 0);
   cout << ",\n";
   cout << ind + "}\n"; 
 }
@@ -80,10 +84,35 @@ void inspect(AddressType t, int indent) {
   }
 }
 
+void inspect(Location l, int indent) {
+  string ind = string(indent * 2, ' ');
+  cout << ind + "Location{";
+  cout << ind + "fileName: " << l.fileName << ", ";
+  cout << ind + "lineNumber: " << l.lineNumber;
+  cout << ind + "}";
+}
+
 int main() {
-  std::string text = "\tLABEL: COPY A, B\nLABEL2:\nADD B";
+  /* std::string text = "\tLABEL: COPY A, B\nLABEL2:\nADD B"; */
+  std::string text = "mul_n: macro \n\
+MULT N\n\
+STORE N\n\
+ENDMACRO\n\
+INPUT N\n\
+LOAD N\n\
+FAT: SUB ONE\n\
+JMPZ FIM\n\
+STORE AUX\n\
+MUL_N \n\
+LOAD AUX\n\
+JMP FAT\n\
+FIM: OUTPUT N\n\
+STOP\n\
+AUX: SPACE\n\
+N: SPACE\n\
+ONE: CONST 1";
   Address addr = Address{AddressType::Absolute, 0};
-  Parser p = Parser(text, addr);
+  Parser p = Parser(FileData{"some_file.asm", text}, addr);
 
   inspect(p, 1);
 

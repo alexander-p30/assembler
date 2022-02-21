@@ -7,19 +7,19 @@
 #include <vector>
 
 int main() {
-  std::string lineText = "\tSOME_LABEL:\tCOPY A, B";
+  std::string rawLineText = "\tSOME_LABEL:\tCOPY A, B";
   Address addr = Address{AddressType::Absolute, 0};
-  Line myLine = Line(lineText, addr);
+  RawLine myRawLine = RawLine(rawLineText, addr);
 
-  std::cout << lineText << std::endl;
+  std::cout << rawLineText << std::endl;
 
-  while (!myLine.isAtLastToken()) {
-    RawToken t = myLine.getCurrentRawToken();
+  while (!myRawLine.isAtLastToken()) {
+    RawToken t = myRawLine.getCurrentRawToken();
     std::string type =
         t.address.type == AddressType::Absolute ? "Absolute" : "Error";
     std::cout << "{Text: " << t.text << ", Address: {Type: " << type
               << ", Number: " << t.address.number << "}}" << std::endl;
-    myLine.nextRawToken();
+    myRawLine.nextRawToken();
   }
 
   std::cout << std::endl;

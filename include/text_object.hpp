@@ -4,63 +4,88 @@
 #include <regex>
 #include <string>
 #include <vector>
-#include "parse.hpp"
+#include "address.hpp"
 
-# define DIRECTIVES std::vector<std::string>{"CONST", "SPACE"}
-# define INSTRUCTIONS std::vector<std::string>{"COPY", "ADD"}
+#define BLANK_LINE_REGEX "^(?:[\t ]*(?:\r?\n|\r))+"
+#define COMMENT_SEPARATORS "[^;]+"
+#define RAW_TOKEN_SEPARATORS "[^ ,\t]+"
+#define IS_LABEL_DEF(rawText) rawText.back() == ':'
 
-class TextObject {
-  public:
+/*
+ * A raw token as the aggregation of a piece of text
+ * and an address, with no behaviour really attached
+ * to it.
+ */
+struct RawToken {
+  std::string text;
+  Address address;
+  Location location;
+};
+
+/*
+ * RawLine class consists of a collection of raw tokens
+ * and an address.
+ */
+class RawLine {
+private:
+  int32_t currentRawTokenIndex;
+  std::string text;
+  std::vector<RawToken> rawTokens;
+  Address address;
+  Location location;
+
+public:
+  RawLine(std::string rawLineText, Address addr, Location loc);
+  RawLine(const RawLine& rLine);
+  RawLine();
+  std::vector<RawToken> getRawTokens();
+  RawToken getCurrentRawToken();
+  RawToken nextRawToken();
+  bool isAtLastToken();
+  Address nextRawLineAddress();
+  std::string getText();
+  Address getAddress();
+  Location getLocation();
+};
+
+enum class TokenType { Instruction, Directive, Symbol, Value };
+
+class Token {
+  protected:
     Address address;
     std::string text;
-};
-
-enum class TokenType { Label, Instruction, Directive, Symbol, Integer };
-
-class Token : public virtual TextObject {
-  private:
-    TokenType type;
-    TokenType resolveType(Parser parser);
-    TokenType resolveType(RawToken rawToken);
+    RawToken rawToken;
 
   public:
-    Token(Parser parser);
     Token(RawToken rawToken);
-    static bool validate(Token t);
-};
-
-class Label : public Token {
-  public:
-    Label(Token t); 
-};
-
-enum class DirectiveType { PreProcessment, Regular };
-
-class Directive : public Token {
-  private:
-    DirectiveType type;
-    DirectiveType resolveType;
-  public:
-    Directive(Token t);
-    static bool validate(Token t);
+    RawToken getRawToken();
 };
 
 class Instruction : public Token {
   public:
     Instruction(Token t);
-    static bool validate(Token t);
+};
+
+class Label : public Token {
+  private:
+    Address definition;
+  public:
+    Label(Token t, Address def);
 };
 
 class Symbol : public Token {
+  private:
+    Address definition;
   public:
     Symbol(Token t);
-    static bool validate(Token t);
+    Symbol(Token t, Address def);
+    Address setDefinition(Address addr);
+    bool isDefined();
 };
 
-class Integer : public Token {
+class Value : public Token {
   public:
-    Integer(Token t);
-    static bool validate(Token t);
+    Value(Token t);
 };
 
 #endif
