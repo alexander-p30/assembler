@@ -3,64 +3,60 @@
 #include <tuple>
 #include <vector>
 
-bool rawLineHasEmptyLabelDef(RawLine rawLine) {
-  return rawLine.getRawTokens().size() == 1 && IS_LABEL_DEF(rawLine.getRawTokens().front().text);
+bool rawLineHasEmptyLabelDef(RawLine * rawLine) {
+  return rawLine->getRawTokens().size() == 1 && IS_LABEL_DEF(rawLine->getRawTokens().front().text);
 }
 
-bool isRawTokenInstruction(RawToken t) {
+bool isRawTokenLabel(RawToken * t) { return t->text.back() == ':'; }
+
+bool isRawTokenInstruction(RawToken * t) {
   const std::vector<std::string> instructions{"ADD", "SUB", "MULT", "DIV", "JMP",
     "JMPN", "JMPP", "JMPZ", "COPY", "LOAD", "STORE", "INPUT", "OUTPUT", "STOP"};
-  auto tokenTextInInstructions = std::find(instructions.begin(), instructions.end(), t.text);
-  return tokenTextInInstructions != instructions.end();
+
+  return std::count(instructions.begin(), instructions.end(), t->text);
 }
 
-std::vector<Token> specializeRawTokens(std::vector<RawToken> rawTokens) {
+bool isRawTokenValue(RawToken * t) { 
+  return std::all_of(t->text.begin(), t->text.end(), ::isdigit); 
+}
+
+std::vector<Token> specializeRawTokens(std::vector<RawToken> rawTokens, Address baseAddress) {
   std::vector<Token> tokens;
+  Address currentAddress = baseAddress;
 
   for(auto rawT = rawTokens.begin(); rawT != rawTokens.end(); ++rawT) {
-    if (isRawTokenLabel(*rawT)) {
-      
-    } else if(isRawTokenInstruction(*rawT)) {
-      tokens.push_back(Instruction(rawT));
-    } else if(isRawTokenMacro(rawT)) {
-      // collapse macro
-    } else if(isRawTokenDirective
-  }
+    RawToken * rawTPtr = &(*rawT);
 
-  switch (rawTokens.size()) {
-  case 1:
-    RawToken rawT = rawTokens.front();
-    Token t = Token(rawT);
-
-    if(isRawTokenInstruction(rawT)) {
-      tokens.push_back(Instruction(t));
+    if (isRawTokenLabel(rawTPtr)) {
+      tokens.push_back(Label(*rawT, currentAddress));
+    } else if(isRawTokenInstruction(rawTPtr)) {
+      tokens.push_back(Instruction(*rawT));
+    } else if(isRawTokenValue(rawTPtr)) {
+      tokens.push_back(Value(*rawT));
     } else {
-      tokens.push_back(t);
+      tokens.push_back(Symbol(*rawT));
     }
-
-    break;
-  case 2:
-  case 3:
-  case 4:
   }
+
+  return tokens;
 }
 
 ProgramLine::ProgramLine(std::vector<Token> lineTokens) { tokens = lineTokens; }
 
-TwoPassAssembler::TwoPassAssembler(PreProcessor p, Address baseAddress) {
+TwoPassAssembler::TwoPassAssembler(PreProcessor * p, Address baseAddress) {
   preProcessor = p;
-  std::vector<RawLine> rawLines = preProcessor.getPreProcessedLines();
+  std::vector<RawLine> rawLines = preProcessor->getPreProcessedLines();
   programLines = std::vector<ProgramLine>{};
 
   for (auto rawLine = rawLines.begin(); rawLine != rawLines.end(); ++rawLine) {
     std::vector<RawToken> rawTokens = rawLine->getRawTokens();
 
-    if (rawLineHasEmptyLabelDef(*rawLine) && std::next(rawLine, 1) != rawLines.end()) {
+    if (rawLineHasEmptyLabelDef(&(*rawLine)) && std::next(rawLine, 1) != rawLines.end()) {
       ++rawLine;
       std::vector<RawToken> nextLineTokens = rawLine->getRawTokens();
       rawTokens.insert(rawTokens.end(), nextLineTokens.begin(), nextLineTokens.end());
     }
 
-    specializeRawTokens(rawTokens);
+    specializeRawTokens(rawTokens, baseAddress);
   }
 }

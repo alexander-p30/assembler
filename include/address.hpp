@@ -23,6 +23,7 @@ Address nextAddress(Address a);
 struct Location {
   std::string fileName;
   int32_t lineNumber;
+  int32_t positionInLine;
 };
 
 #endif

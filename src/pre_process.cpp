@@ -61,7 +61,7 @@ RawLine If::expand() { return innerCode; }
 Equ::Equ(std::string lab, int32_t v) {
   label = lab;
   value = v;
-  token = RawToken{std::to_string(v), Address{AddressType::Absolute, 0}, Location{"", 0}};
+  token = RawToken{std::to_string(v), Location{"", 0, 0}};
 }
 
 int32_t Equ::getValue() { return value; }

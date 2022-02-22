@@ -13,29 +13,26 @@
 
 /*
  * A raw token as the aggregation of a piece of text
- * and an address, with no behaviour really attached
+ * and a location, with no behaviour really attached
  * to it.
  */
 struct RawToken {
   std::string text;
-  Address address;
   Location location;
 };
 
 /*
- * RawLine class consists of a collection of raw tokens
- * and an address.
+ * RawLine class consists of a collection of raw tokens.
  */
 class RawLine {
 private:
   int32_t currentRawTokenIndex;
   std::string text;
   std::vector<RawToken> rawTokens;
-  Address address;
   Location location;
 
 public:
-  RawLine(std::string rawLineText, Address addr, Location loc);
+  RawLine(std::string rawLineText, Location loc);
   RawLine(const RawLine& rLine);
   RawLine();
   std::vector<RawToken> getRawTokens();
@@ -43,9 +40,7 @@ public:
   RawToken getCurrentRawToken();
   RawToken nextRawToken();
   bool isAtLastToken();
-  Address nextRawLineAddress();
   std::string getText();
-  Address getAddress();
   Location getLocation();
 };
 

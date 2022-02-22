@@ -45,7 +45,7 @@ std::vector<RawLine> splitRawLines(std::string text, Location baseLocation) {
  ***********************/
 
 Parser::Parser(FileData fData) {
-  Location startLocation = Location{fData.fileName, 1};
+  Location startLocation = Location{fData.fileName, 1, 0};
   std::string text = fData.fileContent;
   std::for_each(text.begin(), text.end(), [](char &c) { c = ::toupper(c); });
   fileText = text;

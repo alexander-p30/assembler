@@ -40,14 +40,8 @@ void inspect(RawLine rawLine, int indent) {
            cout << ",\n";
            });
   cout << ind + "  },\n";
-  cout << ind + "  address: "; 
-  inspect(rawLine.getAddress(), 0);
-  cout << ",\n";
   cout << ind + "  location: "; 
   inspect(rawLine.getLocation(), 0);
-  cout << ",\n";
-  cout << ind + "  nextRawLineAddress: "; 
-  inspect(rawLine.nextRawLineAddress(), 0);
   cout << ",\n";
   cout << ind + "}\n"; 
 }
@@ -56,8 +50,8 @@ void inspect(RawToken t, int indent) {
   string ind = string(indent * 2, ' ');
   cout << ind + "RawToken{";
   cout << "text: " << t.text << ", ";
-  cout << "address: ";
-  inspect(t.address, 0);
+  cout << "location: ";
+  inspect(t.location, 0);
   cout << "}";
 }
 
@@ -89,7 +83,8 @@ void inspect(Location l, int indent) {
   string ind = string(indent * 2, ' ');
   cout << ind + "Location{";
   cout << ind + "fileName: " << l.fileName << ", ";
-  cout << ind + "lineNumber: " << l.lineNumber;
+  cout << ind + "lineNumber: " << l.lineNumber << ", ";
+  cout << ind + "positionInLine: " << l.positionInLine;
   cout << ind + "}";
 }
 
@@ -142,7 +137,7 @@ N: SPACE\n\
 ONE: CONST 1";
 
   Address addr = Address{AddressType::Absolute, 0};
-  Parser p = Parser(FileData{"some_file.asm", text}, addr);
+  Parser p = Parser(FileData{"some_file.asm", text});
   PreProcessor pp = PreProcessor(p.getRawLines());
 
   int i = 0;

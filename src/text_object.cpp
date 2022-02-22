@@ -11,7 +11,7 @@ std::string purgeComments(std::string text) {
   return std::sregex_iterator(text.begin(), text.end(), separator)->str();
 };
 
-std::vector<RawToken> splitRawTokens(std::string text, Location lineLocation) {
+std::vector<RawToken> splitRawTokens(std::string text, Location location) {
   const std::regex separators(RAW_TOKEN_SEPARATORS);
   std::vector<RawToken> rawTokens = std::vector<RawToken>{};
 
@@ -20,8 +20,9 @@ std::vector<RawToken> splitRawTokens(std::string text, Location lineLocation) {
   auto end = std::sregex_iterator();
 
   for (std::sregex_iterator i = begin; i != end; i++) {
-    RawToken rawToken = RawToken{i->str(), lineLocation};
+    RawToken rawToken = RawToken{i->str(), location};
     rawTokens.push_back(rawToken);
+    location.positionInLine++;
   }
 
   return rawTokens;
@@ -31,7 +32,7 @@ std::vector<RawToken> splitRawTokens(std::string text, Location lineLocation) {
  *        RawLine        *
  *************************/
 
-RawLine::RawLine(std::string rawLineText, Address addr, Location loc) {
+RawLine::RawLine(std::string rawLineText, Location loc) {
   text = rawLineText;
   location = loc;
   currentRawTokenIndex = 0;
@@ -83,21 +84,9 @@ bool RawLine::isAtLastToken() {
 };
 
 /*
- * Return the address where the next rawLine should be.
- */
-Address RawLine::nextRawLineAddress() {
-  return nextAddress(rawTokens.back().address);
-}
-
-/*
  * Return the rawLine's raw unparsed text.
  */
 std::string RawLine::getText() { return text; }
-
-/*
- * Return the rawLine's address.
- */
-Address RawLine::getAddress() { return address; }
 
 /*
  * Return the rawLine's location.

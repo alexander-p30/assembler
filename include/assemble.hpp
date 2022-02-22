@@ -48,10 +48,10 @@ typedef std::vector<Analyzer> analysis;
 
 class TwoPassAssembler {
   private:
-    PreProcessor preProcessor;
+    PreProcessor * preProcessor;
     std::vector<ProgramLine> programLines;
   public:
-    TwoPassAssembler(Parser p);
+    TwoPassAssembler(PreProcessor * p, Address baseAddress);
 };
 
 #endif

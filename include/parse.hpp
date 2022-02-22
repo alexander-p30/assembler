@@ -25,7 +25,7 @@ private:
   RawToken currentRawToken;
 
 public:
-  Parser(FileData fData, Address startAddress);
+  Parser(FileData fData);
   RawLine getCurrentRawLine();
   RawLine nextRawLine();
   RawToken getCurrentRawToken();
