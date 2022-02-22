@@ -1,8 +1,10 @@
+#include "../include/assemble.hpp"
 #include "../include/parse.hpp"
 #include "../include/text_object.hpp"
 #include "../include/pre_process.hpp"
 #include <algorithm>
 #include <iostream>
+#include <memory>
 
 using namespace std;
 
@@ -12,6 +14,8 @@ void inspect(RawToken t, int x);
 void inspect(Address a, int x);
 void inspect(AddressType t, int x);
 void inspect(Location a, int x);
+void inspect(ProgramLine l, int x);
+void inspect(std::shared_ptr<Token> t, int x);
 
 void inspect(Parser p, int indent) {
   std::string ind = string(indent * 2, ' ');
@@ -44,6 +48,29 @@ void inspect(RawLine rawLine, int indent) {
   inspect(rawLine.getLocation(), 0);
   cout << ",\n";
   cout << ind + "}\n"; 
+}
+
+void inspect(ProgramLine progLine, int indent) {
+  std::string ind = string(indent * 2, ' ');
+  std::vector<std::shared_ptr<Token>> tokens = progLine.getTokens();
+  cout << ind + "ProgramLine{\n";
+  cout << ind + "  tokens: {\n"; 
+  for_each(tokens.begin(), tokens.end(),
+           [indent](std::shared_ptr<Token> token) { 
+           inspect(token, indent + 2); 
+           cout << ",\n";
+           });
+  cout << ind + "  },\n";
+  cout << ind + "}\n"; 
+}
+
+void inspect(std::shared_ptr<Token> t, int indent) {
+  string ind = string(indent * 2, ' ');
+  cout << ind + t->_name() << "{";
+  cout << "text: " << t->getText() << ", ";
+  cout << "address: ";
+  inspect(t->getAddress(), 0);
+  cout << "}";
 }
 
 void inspect(RawToken t, int indent) {
@@ -139,11 +166,15 @@ ONE: CONST 1";
   Address addr = Address{AddressType::Absolute, 0};
   Parser p = Parser(FileData{"some_file.asm", text});
   PreProcessor pp = PreProcessor(p.getRawLines());
+  TwoPassAssembler asmer = TwoPassAssembler(&pp, addr);
+
+  /* std::vector<std::shared_ptr<Token>> t{}; */
+  /* t.push_back(); */
 
   int i = 0;
-  auto lines = pp.getPreProcessedLines();
-  std::for_each(lines.begin(), lines.end(), [&i](RawLine rl) {
-    inspect(rl, 1);
+  auto lines = asmer.getFirstPassProgramLines();
+  std::for_each(lines.begin(), lines.end(), [&i](ProgramLine pl) {
+    inspect(pl, 1);
   });
 
   return 0;

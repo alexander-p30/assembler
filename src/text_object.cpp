@@ -97,42 +97,79 @@ Location RawLine::getLocation() { return location; }
  *        Token        *
  ***********************/
 
-Token::Token(RawToken rToken) {
-  rawToken = rToken;
-  std::string treatedText = rToken.text;
+/* Token::Token(RawToken rToken) { */
+/*   rawToken = rToken; */
+/*   std::string treatedText = rToken.text; */
 
-  if(IS_LABEL_DEF(rToken.text))
-    treatedText.pop_back();
+/*   if(IS_LABEL_DEF(rToken.text)) */
+/*     treatedText.pop_back(); */
 
-  text = treatedText;
-}
+/*   text = treatedText; */
+/* } */
 
-RawToken Token::getRawToken() { return rawToken; }
+/* RawToken Token::getRawToken() { return rawToken; } */
+
+/* std::string Token::getText() { return text; } */
+
+/* Address Token::getAddress() { return address; } */
 
 /****************************
  *        Instruction       *
  ****************************/
 
-Instruction::Instruction(Token t) : Token::Token(t.getRawToken()) {};
+Instruction::Instruction(RawToken t) {
+  rawToken = t;
+  std::string treatedText = t.text;
+
+  if(IS_LABEL_DEF(t.text))
+    treatedText.pop_back();
+
+  text = treatedText;
+};
 
 /**********************
- *        Label       *
+ *        SymbolDefinition       *
  **********************/
 
-Label::Label(Token t, Address def) : Token::Token(t.getRawToken()) {
+SymbolDefinition::SymbolDefinition(RawToken t, Address def) {
+  rawToken = t;
+  std::string treatedText = t.text;
+
+  if(IS_LABEL_DEF(t.text))
+    treatedText.pop_back();
+
+  text = treatedText;
   definition = def;
 };
+
+std::string SymbolDefinition::getLabel() { return text; }
+
+Address SymbolDefinition::getDefinition() { return definition; }
 
 /***********************
  *       Symbol        *
  ***********************/
 
 
-Symbol::Symbol(Token t) : Token::Token(t.getRawToken()) {
+Symbol::Symbol(RawToken t) {
+  rawToken = t;
+  std::string treatedText = t.text;
+
+  if(IS_LABEL_DEF(t.text))
+    treatedText.pop_back();
+
+  text = treatedText;
   definition = Address{AddressType::Undefined, 0};
 }
 
-Symbol::Symbol(Token t, Address def) : Token::Token(t.getRawToken()) {
+Symbol::Symbol(RawToken t, Address def) {
+  rawToken = t;
+  std::string treatedText = t.text;
+
+  if(IS_LABEL_DEF(t.text))
+    treatedText.pop_back();
+
+  text = treatedText;
   definition = def;
 }
 
@@ -147,4 +184,12 @@ bool Symbol::isDefined() { return definition.type != AddressType::Undefined; }
  *       Value       *
  *********************/
 
-Value::Value(Token t) : Token::Token(t.getRawToken()) {};
+Value::Value(RawToken t) {
+  rawToken = t;
+  std::string treatedText = t.text;
+
+  if(IS_LABEL_DEF(t.text))
+    treatedText.pop_back();
+
+  text = treatedText;
+};

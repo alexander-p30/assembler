@@ -3,28 +3,29 @@
 
 #include "address.hpp"
 #include "text_object.hpp"
+#include <memory>
 
 enum class ErrorType { Lexical, Syntactical, Semantic };
 
 class Error {
   public:
     ErrorType type;
-    Token token;
+    std::shared_ptr<Token> token;
 };
 
 class LexicalError : Error {
   public:
-    LexicalError(Token t);
+    LexicalError(std::shared_ptr<Token> t);
 };
 
 class SyntacticalError : Error {
   public:
-    SyntacticalError(Token t);
+    SyntacticalError(std::shared_ptr<Token> t);
 };
 
 class SemanticError : Error {
   public:
-    SemanticError(Token t);
+    SemanticError(std::shared_ptr<Token> t);
 };
 
 #endif

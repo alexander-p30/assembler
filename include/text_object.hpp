@@ -53,35 +53,43 @@ class Token {
     RawToken rawToken;
 
   public:
-    Token(RawToken rawToken);
-    RawToken getRawToken();
+    virtual RawToken getRawToken() { return rawToken; };
+    virtual std::string getText() { return text; };
+    virtual Address getAddress() { return address; }
+    virtual std::string _name() = 0;
 };
 
 class Instruction : public Token {
   public:
-    Instruction(Token t);
+    Instruction(RawToken t);
+    std::string _name() { return "Instruction"; }
 };
 
-class Label : public Token {
+class SymbolDefinition : public Token {
   private:
     Address definition;
   public:
-    Label(Token t, Address def);
+    SymbolDefinition(RawToken t, Address def);
+    std::string getLabel();
+    Address getDefinition();
+    std::string _name() { return "SymbolDefinition"; }
 };
 
 class Symbol : public Token {
   private:
     Address definition;
   public:
-    Symbol(Token t);
-    Symbol(Token t, Address def);
+    Symbol(RawToken t);
+    Symbol(RawToken t, Address def);
     Address setDefinition(Address addr);
     bool isDefined();
+    std::string _name() { return "Symbol"; }
 };
 
 class Value : public Token {
   public:
-    Value(Token t);
+    Value(RawToken t);
+    std::string _name() { return "Value"; }
 };
 
 #endif
