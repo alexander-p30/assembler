@@ -1,6 +1,7 @@
 #ifndef TEXT_OBJECT_H
 #define TEXT_OBJECT_H
 
+#include <iostream>
 #include <regex>
 #include <string>
 #include <vector>
@@ -10,6 +11,10 @@
 #define COMMENT_SEPARATORS "[^;]+"
 #define RAW_TOKEN_SEPARATORS "[^ ,\t]+"
 #define IS_LABEL_DEF(rawText) rawText.back() == ':'
+
+void inspect_addr(AddressType t, int indent); 
+
+void inspect_addr(Address a, int indent);
 
 /*
  * A raw token as the aggregation of a piece of text
@@ -64,12 +69,16 @@ class Token {
     virtual RawToken getRawToken() { return rawToken; };
     virtual std::string getText() { return text; };
     virtual std::string _name() = 0;
+    virtual void inspect(int indent) = 0;
 };
 
 class Instruction : public Token, Addressable {
+  private:
+    void defineInstructionAddress();
   public:
     Instruction(RawToken t, Address addr);
     std::string _name() { return "Instruction"; }
+    void inspect(int indent);
 };
 
 class SymbolDefinition : public Token, Addressable {
@@ -80,6 +89,7 @@ class SymbolDefinition : public Token, Addressable {
     std::string getLabel();
     Address getDefinition();
     std::string _name() { return "SymbolDefinition"; }
+    void inspect(int indent);
 };
 
 class Symbol : public Token, Addressable {
@@ -90,18 +100,21 @@ class Symbol : public Token, Addressable {
     Address setDefinition(Address addr);
     bool isDefined();
     std::string _name() { return "Symbol"; }
+    void inspect(int indent);
 };
 
 class Directive : public Token {
   public:
     Directive(RawToken t);
     std::string _name() { return "Directive"; }
+    void inspect(int indent);
 };
 
 class Value : public Token {
   public:
     Value(RawToken t);
     std::string _name() { return "Value"; }
+    void inspect(int indent);
 };
 
 #endif

@@ -1,4 +1,3 @@
-#include "../include/inspect.hpp"
 #include "../include/assemble.hpp"
 #include "../include/error.hpp"
 #include <tuple>
@@ -35,14 +34,17 @@ std::vector<std::shared_ptr<Token>> TwoPassAssembler::specializeRawTokens(std::v
 
   for(auto rawT = rawTokens.begin(); rawT != rawTokens.end(); ++rawT) {
     RawToken * rawTPtr = &(*rawT);
+    bool shoulUpdateAddress = false;
 
     if (isRawTokenSymbolDefinition(rawTPtr)) {
       std::shared_ptr<SymbolDefinition> sDef{ new SymbolDefinition(*rawT, *address)};
       symbolDefinitionTable.push_back(sDef);
       tokens.push_back(sDef);
+      shoulUpdateAddress = true;
     } else if(isRawTokenInstruction(rawTPtr)) {
       std::shared_ptr<Instruction> instruction{ new Instruction(*rawT, *address)};
       tokens.push_back(instruction);
+      shoulUpdateAddress = true;
     } else if(isRawTokenValue(rawTPtr)) {
       std::shared_ptr<Value> value{ new Value(*rawT)};
       tokens.push_back(value);
@@ -52,9 +54,11 @@ std::vector<std::shared_ptr<Token>> TwoPassAssembler::specializeRawTokens(std::v
     } else {
       std::shared_ptr<Symbol> symbol{ new Symbol(*rawT, *address)};
       tokens.push_back(symbol);
+      shoulUpdateAddress = true;
     }
 
-    address->number++;
+    if(shoulUpdateAddress)
+      address->number++;
   }
 
   return tokens;
@@ -64,13 +68,26 @@ ProgramLine::ProgramLine(std::vector<std::shared_ptr<Token>> lineTokens) { token
 
 std::vector<std::shared_ptr<Token>> ProgramLine::getTokens() { return tokens; }
 
+void ProgramLine::inspect(int indent) {
+  std::string ind = std::string(indent * 2, ' ');
+  std::cout << ind + "ProgramLine{\n";
+  std::cout << ind + "  tokens: {\n";
+
+  for(auto &t : this->getTokens()) {
+    t->inspect(indent + 2);
+    std::cout << "\n";
+  }
+
+  std::cout << ind + "  }\n";
+  std::cout << ind + "}\n";
+}
+
 TwoPassAssembler::TwoPassAssembler(PreProcessor * p, Address baseAddress) {
   preProcessor = p;
   firstPassProgramLines = std::vector<ProgramLine>{};
 
   std::vector<RawLine> rawLines = preProcessor->getPreProcessedLines();
   Address currentAddress = baseAddress;
-  inspect(baseAddress, 0);
 
   for (auto rawLine = rawLines.begin(); rawLine != rawLines.end(); ++rawLine) {
     std::vector<RawToken> rawTokens = rawLine->getRawTokens();

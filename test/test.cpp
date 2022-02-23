@@ -2,7 +2,7 @@
 #include "../include/parse.hpp"
 #include "../include/text_object.hpp"
 #include "../include/pre_process.hpp"
-#include "../include/inspect.hpp"
+/* #include "../include/inspect.hpp" */
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -60,13 +60,10 @@ ONE: CONST 1";
   PreProcessor pp = PreProcessor(p.getRawLines());
   TwoPassAssembler asmer = TwoPassAssembler(&pp, addr);
 
-  /* std::vector<std::shared_ptr<Token>> t{}; */
-  /* t.push_back(); */
-
   int i = 0;
   auto lines = asmer.getFirstPassProgramLines();
   std::for_each(lines.begin(), lines.end(), [&i](ProgramLine pl) {
-    inspect(pl, 1);
+      pl.inspect(0);
   });
 
   return 0;

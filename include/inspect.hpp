@@ -14,8 +14,8 @@ using namespace std;
 void inspect(Parser p, int x);
 void inspect(RawLine l, int x);
 void inspect(RawToken t, int x);
-void inspect(Address a, int x);
-void inspect(AddressType t, int x);
+/* void inspect(Address a, int x); */
+/* void inspect(AddressType t, int x); */
 void inspect(Location a, int x);
 void inspect(ProgramLine l, int x);
 void inspect(std::shared_ptr<Token> t, int x);

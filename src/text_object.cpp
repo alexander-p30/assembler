@@ -6,6 +6,30 @@
 #include <algorithm>
 #include <map>
 
+void inspect_addr(AddressType t, int indent) {
+  std::string ind = std::string(indent * 2, ' ');
+  switch (t) {
+  case AddressType::Absolute:
+    std::cout << ind + "Absolute" << ", ";
+    break;
+  case AddressType::Relative:
+    std::cout << ind + "Relative" << ", ";
+    break;
+  case AddressType::Undefined:
+    std::cout << ind + "Undefined" << ", ";
+    break;
+  }
+}
+
+void inspect_addr(Address a, int indent) {
+  std::string ind = std::string(indent * 2, ' ');
+  std::cout << "Address{";
+  std::cout << "type: ";
+  inspect_addr(a.type, 0);
+  std::cout << "number: " << a.number;
+  std::cout << "}";
+}
+
 std::string purgeComments(std::string text) {
   const std::regex separator(COMMENT_SEPARATORS);
   return std::sregex_iterator(text.begin(), text.end(), separator)->str();
@@ -113,27 +137,57 @@ Token::Token(RawToken rToken) {
   text = treatedText;
 }
 
-/* RawToken Token::getRawToken() { return rawToken; } */
-
-/* std::string Token::getText() { return text; } */
-
-/* Address Token::getAddress() { return address; } */
-
 /****************************
  *        Instruction       *
  ****************************/
 
-Instruction::Instruction(RawToken t, Address addr) : Token(t), Addressable(addr) { };
+Instruction::Instruction(RawToken t, Address addr) : Token(t), Addressable(addr) {
+  defineInstructionAddress();
+};
 
-/**********************
+void Instruction::defineInstructionAddress() {
+  const std::vector<std::string> instructions{"ADD", "SUB", "MULT", "DIV", "JMP",
+    "JMPN", "JMPP", "JMPZ", "COPY", "LOAD", "STORE", "INPUT", "OUTPUT", "STOP"};
+
+  int32_t index = std::find(instructions.begin(), instructions.end(), 
+      this->text) - instructions.begin();
+
+  address.type = AddressType::Absolute;
+  address.number = index + 1;
+}
+
+void Instruction::inspect(int indent) {  
+  std::string ind = std::string(indent * 2, ' ');
+  std::cout << ind;
+  std::cout << this->_name() << "{";
+  std::cout << "text: " << this->getText() << ", ";
+  std::cout << "address: ";
+  inspect_addr(this->getAddress(), 0);
+  std::cout << "}";
+}
+
+/*********************************
  *        SymbolDefinition       *
- **********************/
+ *********************************/
 
-SymbolDefinition::SymbolDefinition(RawToken t, Address addr) : Token(t), Addressable(addr) { };
+SymbolDefinition::SymbolDefinition(RawToken t, Address addr) : Token(t), Addressable(addr) {
+  address.type = AddressType::Relative;
+};
 
 std::string SymbolDefinition::getLabel() { return text; }
 
 Address SymbolDefinition::getDefinition() { return address; }
+
+void SymbolDefinition::inspect(int indent) {
+  std::string ind = std::string(indent * 2, ' ');
+  std::cout << ind;
+  std::cout << this->_name() << "{";
+  std::cout << "text: " << this->getText() << ", ";
+  std::cout << "address: ";
+  inspect_addr(this->getAddress(), 0);
+  std::cout << "}";
+
+}
 
 /***********************
  *       Symbol        *
@@ -141,6 +195,7 @@ Address SymbolDefinition::getDefinition() { return address; }
 
 
 Symbol::Symbol(RawToken t, Address addr) : Token(t), Addressable(addr) {
+  address.type = AddressType::Relative;
   definition = Address{AddressType::Undefined, 0};
 }
 
@@ -151,14 +206,40 @@ Address Symbol::setDefinition(Address addr) {
 
 bool Symbol::isDefined() { return address.type != AddressType::Undefined; }
 
+void Symbol::inspect(int indent) {  
+  std::string ind = std::string(indent * 2, ' ');
+  std::cout << ind;
+  std::cout << this->_name() << "{";
+  std::cout << "text: " << this->getText() << ", ";
+  std::cout << "address: ";
+  inspect_addr(this->getAddress(), 0);
+  std::cout << "}";
+}
+
 /*************************
  *       Directive       *
  *************************/
 
 Directive::Directive(RawToken t) : Token(t) { };
 
+void Directive::inspect(int indent) {  
+  std::string ind = std::string(indent * 2, ' ');
+  std::cout << ind;
+  std::cout << this->_name() << "{";
+  std::cout << "text: " << this->getText();
+  std::cout << "}";
+}
+
 /*********************
  *       Value       *
  *********************/
 
 Value::Value(RawToken t) : Token(t) { };
+
+void Value::inspect(int indent) {  
+  std::string ind = std::string(indent * 2, ' ');
+  std::cout << ind;
+  std::cout << this->_name() << "{";
+  std::cout << "text: " << this->getText();
+  std::cout << "}";
+}

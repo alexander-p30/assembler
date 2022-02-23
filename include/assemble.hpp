@@ -14,6 +14,7 @@ class ProgramLine {
   public:
     ProgramLine(std::vector<std::shared_ptr<Token>> lineTokens); 
     std::vector<std::shared_ptr<Token>> getTokens();
+    void inspect(int indent);
 };
 
 class Analyzer {

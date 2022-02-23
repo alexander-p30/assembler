@@ -51,11 +51,9 @@ void inspect(std::shared_ptr<Token> t, int indent) {
   string ind = string(indent * 2, ' ');
   cout << ind + t->_name() << "{";
   cout << "text: " << t->getText() << ", ";
-  auto addr = (std::shared_ptr<Addressable>) t;
-  if(addr != nullptr) {
-    cout << "address: ";
-    inspect(addr->getAddress(), 0);
-  }
+ // get rid of addresasble and add it to token as virtual
+  cout << "address: ";
+  t->print_address();
   cout << "}";
 }
 
@@ -68,29 +66,29 @@ void inspect(RawToken t, int indent) {
   cout << "}";
 }
 
-void inspect(Address a, int indent) {
-  string ind = string(indent * 2, ' ');
-  cout << "Address{";
-  cout << "type: ";
-  inspect(a.type, 0);
-  cout << "number: " << a.number;
-  cout << "}";
-}
+/* void inspect(Address a, int indent) { */
+/*   string ind = string(indent * 2, ' '); */
+/*   cout << "Address{"; */
+/*   cout << "type: "; */
+/*   inspect(a.type, 0); */
+/*   cout << "number: " << a.number; */
+/*   cout << "}"; */
+/* } */
 
-void inspect(AddressType t, int indent) {
-  string ind = string(indent * 2, ' ');
-  switch (t) {
-  case AddressType::Absolute:
-    cout << ind + "Absolute" << ", ";
-    break;
-  case AddressType::Relative:
-    cout << ind + "Relative" << ", ";
-    break;
-  case AddressType::Undefined:
-    cout << ind + "Undefined" << ", ";
-    break;
-  }
-}
+/* void inspect(AddressType t, int indent) { */
+/*   string ind = string(indent * 2, ' '); */
+/*   switch (t) { */
+/*   case AddressType::Absolute: */
+/*     cout << ind + "Absolute" << ", "; */
+/*     break; */
+/*   case AddressType::Relative: */
+/*     cout << ind + "Relative" << ", "; */
+/*     break; */
+/*   case AddressType::Undefined: */
+/*     cout << ind + "Undefined" << ", "; */
+/*     break; */
+/*   } */
+/* } */
 
 void inspect(Location l, int indent) {
   string ind = string(indent * 2, ' ');
