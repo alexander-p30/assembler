@@ -46,44 +46,56 @@ public:
 
 enum class TokenType { Instruction, Directive, Symbol, Value };
 
-class Token {
+class Addressable {
   protected:
     Address address;
+  public:
+    Addressable(Address addr);
+    virtual Address getAddress() { return address; }
+};
+
+class Token {
+  protected:
     std::string text;
     RawToken rawToken;
 
   public:
+    Token(RawToken t);
     virtual RawToken getRawToken() { return rawToken; };
     virtual std::string getText() { return text; };
-    virtual Address getAddress() { return address; }
     virtual std::string _name() = 0;
 };
 
-class Instruction : public Token {
+class Instruction : public Token, Addressable {
   public:
-    Instruction(RawToken t);
+    Instruction(RawToken t, Address addr);
     std::string _name() { return "Instruction"; }
 };
 
-class SymbolDefinition : public Token {
+class SymbolDefinition : public Token, Addressable {
   private:
     Address definition;
   public:
-    SymbolDefinition(RawToken t, Address def);
+    SymbolDefinition(RawToken t, Address addr);
     std::string getLabel();
     Address getDefinition();
     std::string _name() { return "SymbolDefinition"; }
 };
 
-class Symbol : public Token {
+class Symbol : public Token, Addressable {
   private:
     Address definition;
   public:
-    Symbol(RawToken t);
-    Symbol(RawToken t, Address def);
+    Symbol(RawToken t, Address addr);
     Address setDefinition(Address addr);
     bool isDefined();
     std::string _name() { return "Symbol"; }
+};
+
+class Directive : public Token {
+  public:
+    Directive(RawToken t);
+    std::string _name() { return "Directive"; }
 };
 
 class Value : public Token {
