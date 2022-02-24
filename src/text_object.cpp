@@ -200,11 +200,13 @@ Symbol::Symbol(RawToken t, Address addr) : Token(t), Addressable(addr) {
 }
 
 Address Symbol::setDefinition(Address addr) {
-  address = addr;
-  return address;
+  definition = addr;
+  return definition;
 }
 
-bool Symbol::isDefined() { return address.type != AddressType::Undefined; }
+Address Symbol::getDefinition() { return definition; }
+
+bool Symbol::isDefined() { return definition.type != AddressType::Undefined; }
 
 void Symbol::inspect(int indent) {  
   std::string ind = std::string(indent * 2, ' ');
@@ -213,6 +215,9 @@ void Symbol::inspect(int indent) {
   std::cout << "text: " << this->getText() << ", ";
   std::cout << "address: ";
   inspect_addr(this->getAddress(), 0);
+  std::cout << "},";
+  std::cout << "definition: ";
+  inspect_addr(this->getDefinition(), 0);
   std::cout << "}";
 }
 

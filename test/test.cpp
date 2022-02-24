@@ -61,7 +61,7 @@ ONE: CONST 1";
   TwoPassAssembler asmer = TwoPassAssembler(&pp, addr);
 
   int i = 0;
-  auto lines = asmer.getFirstPassProgramLines();
+  auto lines = asmer.getSecondPassProgramLines();
   std::for_each(lines.begin(), lines.end(), [&i](ProgramLine pl) {
       pl.inspect(0);
   });

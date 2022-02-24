@@ -9,7 +9,7 @@ Macro buildMacro(std::vector<RawLine>::iterator macroStart, std::vector<RawLine>
   std::string label = macroStart->getRawTokens()[0].text;
   label.pop_back();
   std::vector<RawLine> innerCode{std::next(macroStart, 1), macroEnd};
-  return Macro(label, innerCode);
+  return Macro(label, innerCode, macroEnd->getText() == "ENDMACRO");
 }
 
 Equ buildEqu(RawLine rawLine) {
@@ -28,9 +28,10 @@ If buildConditional(RawLine conditionalLine, RawLine codeLine) {
  *        Macro        *
  ***********************/
 
-Macro::Macro(std::string lab, std::vector<RawLine> code) {
+Macro::Macro(std::string lab, std::vector<RawLine> code, bool hasEnd) {
   innerCode = code;
   label = lab;
+  end = hasEnd;
 }
 
 std::string Macro::getLabel() { return label; }

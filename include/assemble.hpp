@@ -55,12 +55,17 @@ class TwoPassAssembler {
     std::vector<std::shared_ptr<SymbolDefinition>> symbolDefinitionTable;
     std::vector<ProgramLine> firstPassProgramLines;
     std::vector<ProgramLine> secondPassProgramLines;
+    std::vector<std::vector<int32_t>> _asm;
+    void assembleLine(ProgramLine programLine);
+    void firstPass(Address baseAddress);
+    void secondPass(Address baseAddress);
     std::vector<std::shared_ptr<Token>> specializeRawTokens(std::vector<RawToken> rawTokens, Address * address);
     std::vector<std::shared_ptr<SymbolDefinition>>::iterator findSymbolDefinition(std::string label);
   public:
     TwoPassAssembler(PreProcessor * p, Address baseAddress);
     std::vector<ProgramLine> getFirstPassProgramLines();
     std::vector<ProgramLine> getSecondPassProgramLines();
+    std::vector<int32_t> getAsm();
 };
 
 #endif

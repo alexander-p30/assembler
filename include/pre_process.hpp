@@ -16,7 +16,7 @@ class Macro {
     std::vector<RawLine> innerCode;
     bool end;
   public:
-    Macro(std::string lab, std::vector<RawLine> code);
+    Macro(std::string lab, std::vector<RawLine> code, bool hasEnd);
     std::string getLabel();
     std::vector<RawLine> expand();
     bool hasEnd();

@@ -82,12 +82,8 @@ void ProgramLine::inspect(int indent) {
   std::cout << ind + "}\n";
 }
 
-TwoPassAssembler::TwoPassAssembler(PreProcessor * p, Address baseAddress) {
-  preProcessor = p;
-  firstPassProgramLines = std::vector<ProgramLine>{};
-
+void TwoPassAssembler::firstPass(Address currentAddress) {
   std::vector<RawLine> rawLines = preProcessor->getPreProcessedLines();
-  Address currentAddress = baseAddress;
 
   for (auto rawLine = rawLines.begin(); rawLine != rawLines.end(); ++rawLine) {
     std::vector<RawToken> rawTokens = rawLine->getRawTokens();
@@ -98,9 +94,108 @@ TwoPassAssembler::TwoPassAssembler(PreProcessor * p, Address baseAddress) {
       rawTokens.insert(rawTokens.end(), nextLineTokens.begin(), nextLineTokens.end());
     }
 
-    std::vector<std::shared_ptr<Token>> specializedTokens = specializeRawTokens(rawTokens, &baseAddress);
+    std::vector<std::shared_ptr<Token>> specializedTokens = specializeRawTokens(rawTokens, &currentAddress);
     firstPassProgramLines.push_back(ProgramLine(specializedTokens));
   }
+}
+
+std::vector<std::shared_ptr<SymbolDefinition>>::iterator TwoPassAssembler::findSymbolDefinition(
+    std::string label
+    ) {
+      std::cout << "\nQuerying label: " << label << std::endl;
+  return std::find_if(symbolDefinitionTable.begin(), symbolDefinitionTable.end(), 
+      [label](std::shared_ptr<SymbolDefinition> sDef) {
+      if(sDef->getText() == label)
+        std::cout << "Found: "; sDef->inspect(0);
+        std::cout << "\n";
+
+      return sDef->getText() == label;
+      });
+}
+
+void TwoPassAssembler::secondPass(Address currentAddress) {
+  for(auto programLine = firstPassProgramLines.begin(); programLine != firstPassProgramLines.end(); ++programLine) {
+    /* std::cout << "\nFIRST THING\n"; */
+    std::vector<std::shared_ptr<Token>> tokens = programLine->getTokens();
+    std::vector<std::shared_ptr<Token>> newTokens{};
+
+    for(auto tokenIt = tokens.begin(); tokenIt != tokens.end(); ++tokenIt) {
+      std::shared_ptr<Token> token = (*tokenIt);
+      std::string tokenType = token->_name();
+
+      if(tokenType == "Symbol") {
+        std::shared_ptr<Symbol> symbol = std::dynamic_pointer_cast<Symbol>(token);
+        auto symbolDefinition = findSymbolDefinition(symbol->getText());
+
+        if(symbolDefinition != symbolDefinitionTable.end())
+          symbol->setDefinition((*symbolDefinition)->getDefinition());
+
+        auto symbolDup = std::make_shared<Symbol>(symbol->getRawToken(), symbol->getAddress());
+        newTokens.push_back(symbol);
+      } else {
+        newTokens.push_back(token);
+      }
+    }
+
+    ProgramLine newProgramLine = ProgramLine(newTokens);
+    secondPassProgramLines.push_back(newProgramLine);
+    assembleLine(newProgramLine);
+  }
+}
+
+void _assemble_error(std::vector<int32_t> * x) { x->push_back(0); };
+
+void TwoPassAssembler::assembleLine(ProgramLine programLine) {
+  std::vector<std::shared_ptr<Token>> tokens = programLine.getTokens();
+  std::vector<int32_t> lineAsm{};
+
+  for(auto tokenIt = tokens.begin(); tokenIt != tokens.end(); ++tokenIt) {
+    std::shared_ptr<Token> token = (*tokenIt);
+    std::string tokenType = token->_name();
+
+    if(tokenType == "SymbolDefinition") {
+      auto nextTokenIt = std::next(tokenIt, 1);
+      if(nextTokenIt != tokens.end() && (*nextTokenIt)->_name() == "Directive") {
+        std::string tokenDirective = (*nextTokenIt)->getText();
+
+        if(tokenDirective == "CONST") {
+          auto tokenValue = std::next(nextTokenIt, 1);
+
+          if(tokenValue != tokens.end() && (*tokenValue)->_name() == "Value") {
+            lineAsm.push_back(std::stoi((*tokenValue)->getText()));
+          } else if(tokenValue != tokens.end()) {
+            _assemble_error(&lineAsm);
+          }
+          tokenIt = tokenValue;
+        } else if(tokenDirective == "SPACE") {
+          lineAsm.push_back(0);
+          tokenIt = nextTokenIt;
+        }
+      }
+    } else if(tokenType == "Symbol") {
+      std::shared_ptr<Symbol> symbol = std::dynamic_pointer_cast<Symbol>(token);
+      if(symbol->isDefined()) {
+        lineAsm.push_back(symbol->getDefinition().number);
+      } else {
+        _assemble_error(&lineAsm);
+      }
+    } else if(tokenType == "Instruction") {
+      std::shared_ptr<Instruction> instruction = std::dynamic_pointer_cast<Instruction>(token);
+      lineAsm.push_back(instruction->getAddress().number);
+    } else if(tokenType == "Value") {
+      lineAsm.push_back(std::stoi(token->getText()));
+    } else if(tokenType == "Directive") {
+      _assemble_error(&lineAsm);
+    }
+  }
+
+  _asm.push_back(lineAsm);
+}
+
+TwoPassAssembler::TwoPassAssembler(PreProcessor * p, Address baseAddress) {
+  preProcessor = p;
+  firstPass(baseAddress);
+  secondPass(baseAddress);
 }
 
 std::vector<ProgramLine> TwoPassAssembler::getFirstPassProgramLines() { 

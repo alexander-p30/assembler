@@ -72,7 +72,7 @@ class Token {
     virtual void inspect(int indent) = 0;
 };
 
-class Instruction : public Token, Addressable {
+class Instruction : public Token, public Addressable {
   private:
     void defineInstructionAddress();
   public:
@@ -81,7 +81,7 @@ class Instruction : public Token, Addressable {
     void inspect(int indent);
 };
 
-class SymbolDefinition : public Token, Addressable {
+class SymbolDefinition : public Token, public Addressable {
   private:
     Address definition;
   public:
@@ -92,12 +92,13 @@ class SymbolDefinition : public Token, Addressable {
     void inspect(int indent);
 };
 
-class Symbol : public Token, Addressable {
+class Symbol : public Token, public Addressable {
   private:
     Address definition;
   public:
     Symbol(RawToken t, Address addr);
     Address setDefinition(Address addr);
+    Address getDefinition();
     bool isDefined();
     std::string _name() { return "Symbol"; }
     void inspect(int indent);
