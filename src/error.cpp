@@ -79,9 +79,27 @@ std::string SyntacticalError::message() {
 SemanticError::SemanticError(std::shared_ptr<Token> t, std::string desc)
     : Error(t, desc) {
   type = ErrorType::Semantic;
+  tokenType = "Token";
+}
+
+SemanticError::SemanticError(std::shared_ptr<RawToken> t,
+                                   std::string desc)
+    : Error(t, desc) {
+  type = ErrorType::Syntactical;
+  tokenType = "RawToken";
 }
 
 std::string SemanticError::message() {
-  return std::string{baseMessage(token->getRawToken().location) + 
-    '"' + token->getText() + "\" " + description};
+  std::string txt;
+  Location l;
+
+  if(tokenType == "RawToken") {
+    txt = rawToken->text;
+    l = rawToken->location;
+  } else if(tokenType == "Token") {
+    txt = token->getText();
+    l = token->getRawToken().location;
+  }
+
+  return std::string{baseMessage(l) + '"' + txt + "\" " + description};
 }

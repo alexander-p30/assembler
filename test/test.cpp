@@ -1,4 +1,5 @@
 #include "../include/assemble.hpp"
+#include "../include/analyze.hpp"
 #include "../include/inspect.hpp"
 #include "../include/error.hpp"
 #include "../include/parse.hpp"
@@ -52,18 +53,37 @@ std::cout << text << std::endl;
       inspect(pl, 0);
   });
 
+  MacroAnalyzer macroAnlz = MacroAnalyzer(std::make_shared<PreProcessor>(pp));
+  std::vector<std::shared_ptr<Error>> macroErrors = macroAnlz.analyze();
+  std::cout << "MACRO: " << macroErrors.size() << std::endl;
+  std::for_each(macroErrors.begin(), macroErrors.end(), [](std::shared_ptr<Error> err) {
+      std::cout << err->message() << std::endl;
+  });
+
+  DirectiveAnalyzer directiveAnlz = DirectiveAnalyzer(std::make_shared<PreProcessor>(pp));
+  std::vector<std::shared_ptr<Error>> directiveErrors = directiveAnlz.analyze();
+  std::for_each(directiveErrors.begin(), directiveErrors.end(), [](std::shared_ptr<Error> err) {
+      std::cout << err->message() << std::endl;
+  });
+
+
+
+
   /* std::cout << std::endl; */
 
-  /* SemanticError err = SemanticError(lines.front().getTokens().front(), std::string{"nao definido."}); */
-  /* auto rtoken = std::make_shared<RawToken>(pp.getPreProcessedLines().back().getRawTokens().front()); */
-  /* LexicalError err2 = LexicalError(rtoken, std::string{"token invalido."}); */
-  /* rtoken = std::make_shared<RawToken>(pp.getPreProcessedLines()[7].getRawTokens().front()); */
-  /* SyntacticalError err3 = SyntacticalError(rtoken, "MACRO sem ENDMACRO."); */
-  /* SyntacticalError err4 = SyntacticalError(lines[3].getTokens().front(), "label dupla na linha"); */
-  /* std::cout << err.message() << std::endl; */
-  /* std::cout << err2.message() << std::endl; */
-  /* std::cout << err3.message() << std::endl; */
-  /* std::cout << err4.message() << std::endl; */
+/*   SemanticError err = SemanticError(lines.front().getTokens().front(), std::string{"nao definido."}); */
+/*   auto rtoken = std::make_shared<RawToken>(pp.getPreProcessedLines().back().getRawTokens().front()); */
+/*   LexicalError err2 = LexicalError(rtoken, std::string{"token invalido."}); */
+/*   rtoken = std::make_shared<RawToken>(pp.getPreProcessedLines()[7].getRawTokens().front()); */
+/*   SyntacticalError err3 = SyntacticalError(rtoken, "MACRO sem ENDMACRO."); */
+/*   SyntacticalError err4 = SyntacticalError(lines[3].getTokens().front(), "label dupla na linha"); */
+/*   std::cout << err.message() << std::endl; */
+/*   std::cout << err2.message() << std::endl; */
+/*   std::cout << err3.message() << std::endl; */
+/*   std::cout << err4.message() << std::endl; */
+/*   std::shared_ptr<Error> err5{ std::make_shared<SemanticError>(err) }; */
+  /* std::vector<std::shared_ptr<Error>> errs{}; */
+  /* errs.push_back(std::make_shared<SemanticError>(err)); */
 
   /* std::cout << std::endl; */
 

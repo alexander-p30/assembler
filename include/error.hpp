@@ -8,10 +8,9 @@
 enum class ErrorType { Lexical, Syntactical, Semantic, Undefined };
 
 class Error {
-  private:
+  protected:
     std::string errorTypeString();
     std::string locationToString(Location l);
-  protected:
     std::string baseMessage(Location l);
   public:
     Error(std::shared_ptr<Token> t, std::string description);
@@ -23,13 +22,13 @@ class Error {
     virtual std::string message() = 0;
 };
 
-class LexicalError : Error {
+class LexicalError : public Error {
   public:
     LexicalError(std::shared_ptr<RawToken> t, std::string description);
     std::string message();
 };
 
-class SyntacticalError : Error {
+class SyntacticalError : public Error {
   private:
     std::string tokenType;
   public:
@@ -38,9 +37,12 @@ class SyntacticalError : Error {
     std::string message();
 };
 
-class SemanticError : Error {
+class SemanticError : public Error {
+  private:
+    std::string tokenType;
   public:
     SemanticError(std::shared_ptr<Token> t, std::string description);
+    SemanticError(std::shared_ptr<RawToken> t, std::string description);
     std::string message();
 };
 

@@ -5,10 +5,11 @@
 
 using std::cout;
 
-Macro buildMacro(std::vector<RawLine>::iterator macroStart, std::vector<RawLine>::iterator macroEnd) {
+Macro buildMacro(std::vector<RawLine>::iterator macroStart, 
+    std::vector<RawLine>::iterator macroEnd, bool hasEnd) {
   RawToken macroDefinition = macroStart->getRawTokens().front();
   std::vector<RawLine> innerCode{std::next(macroStart, 1), macroEnd};
-  return Macro(macroDefinition, innerCode, macroEnd->getText() == "ENDMACRO");
+  return Macro(macroDefinition, innerCode, hasEnd);
 }
 
 Equ buildEqu(RawLine rawLine) {
@@ -30,8 +31,11 @@ Macro::Macro(RawToken def, std::vector<RawLine> code, bool hasEnd) {
   innerCode = code;
   label = def.text;
   label.pop_back();
+  definitionRawToken = std::make_shared<RawToken>(def);
   end = hasEnd;
 }
+
+bool Macro::hasEnd() { return end; }
 
 std::string Macro::getLabel() { return label; }
 
@@ -79,6 +83,7 @@ RawToken Equ::expand() { return token; }
 
 PreProcessor::PreProcessor(std::vector<RawLine> l) {
   std::vector<RawLine> directiveFreeLines;
+  lines = l;
 
   for(auto rLine = l.begin(); rLine != l.end(); ++rLine) {
     std::vector<RawToken> lineRawTokens = rLine->getRawTokens();
@@ -88,8 +93,12 @@ PreProcessor::PreProcessor(std::vector<RawLine> l) {
         return LINE_ENDS_MACRO(rl);
       });
 
-      mdt.push_back(buildMacro(rLine, macroEnd));
-      rLine = macroEnd;
+      bool hasEnd = macroEnd != l.end() && macroEnd->getText() == "ENDMACRO";
+
+      Macro macro = buildMacro(rLine, macroEnd, hasEnd);
+      mdt.push_back(macro);
+      if(macro.hasEnd())
+        rLine = macroEnd;
     } else if(LINE_DEFINES_EQU(rLine)) {
       vals.push_back(buildEqu(*rLine));
     } else if(LINE_DEFINES_CONDITIONAL(rLine)) {
@@ -104,7 +113,7 @@ PreProcessor::PreProcessor(std::vector<RawLine> l) {
     }
   }
 
-  std::vector<RawLine> preProcessedLines;
+  std::vector<RawLine> preProcessedLinesAux;
   for(auto rLine = directiveFreeLines.begin(); rLine != directiveFreeLines.end(); ++rLine) {
     std::vector<RawToken> lineRawTokens = rLine->getRawTokens();
 
@@ -117,10 +126,10 @@ PreProcessor::PreProcessor(std::vector<RawLine> l) {
         conditional->setCond(conditionalVal->getValue());
 
         if(conditional->shouldExpand()) {
-          preProcessedLines.push_back(conditional->expand());
+          preProcessedLinesAux.push_back(conditional->expand());
         }
       } else {
-        preProcessedLines.push_back(*rLine);
+        preProcessedLinesAux.push_back(*rLine);
       }
     } else if(lineRawTokens.size() == 1) {
       std::string tokenLabel = lineRawTokens.front().text;
@@ -128,9 +137,9 @@ PreProcessor::PreProcessor(std::vector<RawLine> l) {
 
       if(macro != mdt.end()) {
         std::vector<RawLine> macroCode = macro->expand();
-        preProcessedLines.insert(preProcessedLines.end(), macroCode.begin(), macroCode.end());
+        preProcessedLinesAux.insert(preProcessedLinesAux.end(), macroCode.begin(), macroCode.end());
       } else {
-        preProcessedLines.push_back(*rLine);
+        preProcessedLinesAux.push_back(*rLine);
       }
     } else {
       std::vector<Equ> v = vals;
@@ -143,11 +152,11 @@ PreProcessor::PreProcessor(std::vector<RawLine> l) {
       }
 
       rLine->setRawTokens(lineRawTokens);
-      preProcessedLines.push_back(*rLine);
+      preProcessedLinesAux.push_back(*rLine);
     }
   }
 
-  lines = preProcessedLines;
+  preProcessedLines = preProcessedLinesAux;
 }
 
 std::vector<Macro>::iterator PreProcessor::findMacro(std::string tokenLabel) {
@@ -169,7 +178,9 @@ std::vector<Equ>::iterator PreProcessor::findVal(std::string valToken) {
       });
 }
 
-std::vector<RawLine> PreProcessor::getPreProcessedLines() { return lines; }
+std::vector<RawLine> PreProcessor::getLines() { return lines; }
+
+std::vector<RawLine> PreProcessor::getPreProcessedLines() { return preProcessedLines; }
 
 std::vector<Macro> PreProcessor::getMdt() { return mdt; }
 
