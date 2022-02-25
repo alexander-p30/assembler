@@ -6,31 +6,30 @@
 using std::cout;
 
 Macro buildMacro(std::vector<RawLine>::iterator macroStart, std::vector<RawLine>::iterator macroEnd) {
-  std::string label = macroStart->getRawTokens()[0].text;
-  label.pop_back();
+  RawToken macroDefinition = macroStart->getRawTokens().front();
   std::vector<RawLine> innerCode{std::next(macroStart, 1), macroEnd};
-  return Macro(label, innerCode, macroEnd->getText() == "ENDMACRO");
+  return Macro(macroDefinition, innerCode, macroEnd->getText() == "ENDMACRO");
 }
 
 Equ buildEqu(RawLine rawLine) {
-  std::string label = rawLine.getRawTokens()[0].text;
-  label.pop_back();
+  RawToken rToken = rawLine.getRawTokens()[0];
   int32_t value = std::stoi(rawLine.getRawTokens()[2].text);
-  return Equ(label, value);
+  return Equ(rToken, value);
 }
 
 If buildConditional(RawLine conditionalLine, RawLine codeLine) {
-  std::string condLabel = conditionalLine.getRawTokens()[1].text;
-  return If(condLabel, codeLine);
+  RawToken rawToken = conditionalLine.getRawTokens()[1];
+  return If(rawToken, codeLine);
 }
 
 /***********************
  *        Macro        *
  ***********************/
 
-Macro::Macro(std::string lab, std::vector<RawLine> code, bool hasEnd) {
+Macro::Macro(RawToken def, std::vector<RawLine> code, bool hasEnd) {
   innerCode = code;
-  label = lab;
+  label = def.text;
+  label.pop_back();
   end = hasEnd;
 }
 
@@ -42,9 +41,10 @@ std::vector<RawLine> Macro::expand() { return innerCode; }
  *       If        *
  *******************/
 
-If::If(std::string lab, RawLine code) {
+If::If(RawToken rToken, RawLine code) {
+  rawToken = std::make_shared<RawToken>(rToken);
   innerCode = code;
-  label = lab;
+  label = rawToken->text;
 }
 
 bool If::setCond(int32_t val) { return cond = val; }
@@ -59,8 +59,10 @@ RawLine If::expand() { return innerCode; }
  *        Equ        *
  *********************/
 
-Equ::Equ(std::string lab, int32_t v) {
-  label = lab;
+Equ::Equ(RawToken rToken, int32_t v) {
+  rawToken = std::make_shared<RawToken>(rToken);
+  label = rawToken->text;
+  label.pop_back();
   value = v;
   token = RawToken{std::to_string(v), Location{"", 0, 0}};
 }
@@ -168,4 +170,10 @@ std::vector<Equ>::iterator PreProcessor::findVal(std::string valToken) {
 }
 
 std::vector<RawLine> PreProcessor::getPreProcessedLines() { return lines; }
+
+std::vector<Macro> PreProcessor::getMdt() { return mdt; }
+
+std::vector<If> PreProcessor::getConditionals() { return conditionals; }
+
+std::vector<Equ> PreProcessor::getVals() { return vals; }
 

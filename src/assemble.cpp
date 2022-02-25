@@ -40,7 +40,6 @@ std::vector<std::shared_ptr<Token>> TwoPassAssembler::specializeRawTokens(std::v
       std::shared_ptr<SymbolDefinition> sDef{ new SymbolDefinition(*rawT, *address)};
       symbolDefinitionTable.push_back(sDef);
       tokens.push_back(sDef);
-      shoulUpdateAddress = true;
     } else if(isRawTokenInstruction(rawTPtr)) {
       std::shared_ptr<Instruction> instruction{ new Instruction(*rawT, *address)};
       tokens.push_back(instruction);
@@ -51,6 +50,7 @@ std::vector<std::shared_ptr<Token>> TwoPassAssembler::specializeRawTokens(std::v
     } else if(isRawTokenDirective(rawTPtr)) {
       std::shared_ptr<Directive> directive{ new Directive(*rawT)};
       tokens.push_back(directive);
+      shoulUpdateAddress = true;
     } else {
       std::shared_ptr<Symbol> symbol{ new Symbol(*rawT, *address)};
       tokens.push_back(symbol);
@@ -102,13 +102,8 @@ void TwoPassAssembler::firstPass(Address currentAddress) {
 std::vector<std::shared_ptr<SymbolDefinition>>::iterator TwoPassAssembler::findSymbolDefinition(
     std::string label
     ) {
-      std::cout << "\nQuerying label: " << label << std::endl;
   return std::find_if(symbolDefinitionTable.begin(), symbolDefinitionTable.end(), 
       [label](std::shared_ptr<SymbolDefinition> sDef) {
-      if(sDef->getText() == label)
-        std::cout << "Found: "; sDef->inspect(0);
-        std::cout << "\n";
-
       return sDef->getText() == label;
       });
 }
@@ -197,6 +192,8 @@ TwoPassAssembler::TwoPassAssembler(PreProcessor * p, Address baseAddress) {
   firstPass(baseAddress);
   secondPass(baseAddress);
 }
+
+std::vector<std::vector<int32_t>> TwoPassAssembler::getAsm() { return _asm; }
 
 std::vector<ProgramLine> TwoPassAssembler::getFirstPassProgramLines() { 
   return firstPassProgramLines; 

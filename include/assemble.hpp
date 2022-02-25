@@ -17,38 +17,6 @@ class ProgramLine {
     void inspect(int indent);
 };
 
-class Analyzer {
-  public:
-    virtual std::vector<Error> analyze() = 0;
-};
-
-class MacroAnalyzer : public Analyzer {
-  public:
-    MacroAnalyzer(std::vector<ProgramLine> program);
-};
-
-class DirectiveAnalyzer : public Analyzer {
-  public:
-    DirectiveAnalyzer(std::vector<ProgramLine> program);
-};
-
-class LexicalAnalyzer : public Analyzer {
-  public:
-    LexicalAnalyzer(std::vector<ProgramLine> program);
-};
-
-class SyntacticalAnalyzer : public Analyzer {
-  public:
-    SyntacticalAnalyzer(std::vector<ProgramLine> program);
-};
-
-class SemanticalAnalyzer : public Analyzer {
-  public:
-    SemanticalAnalyzer(std::vector<ProgramLine> program);
-};
-
-typedef std::vector<Analyzer> analysis;
-
 class TwoPassAssembler {
   private:
     PreProcessor * preProcessor;
@@ -65,7 +33,7 @@ class TwoPassAssembler {
     TwoPassAssembler(PreProcessor * p, Address baseAddress);
     std::vector<ProgramLine> getFirstPassProgramLines();
     std::vector<ProgramLine> getSecondPassProgramLines();
-    std::vector<int32_t> getAsm();
+    std::vector<std::vector<int32_t>> getAsm();
 };
 
 #endif

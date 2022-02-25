@@ -52,8 +52,6 @@ void inspect(std::shared_ptr<Token> t, int indent) {
   cout << ind + t->_name() << "{";
   cout << "text: " << t->getText() << ", ";
  // get rid of addresasble and add it to token as virtual
-  cout << "address: ";
-  t->print_address();
   cout << "}";
 }
 

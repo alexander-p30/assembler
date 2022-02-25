@@ -15,8 +15,9 @@ class Macro {
     std::string label;
     std::vector<RawLine> innerCode;
     bool end;
+    std::shared_ptr<RawToken> definitionRawToken;
   public:
-    Macro(std::string lab, std::vector<RawLine> code, bool hasEnd);
+    Macro(RawToken def, std::vector<RawLine> code, bool hasEnd);
     std::string getLabel();
     std::vector<RawLine> expand();
     bool hasEnd();
@@ -27,8 +28,9 @@ class If {
     std::string label;
     bool cond;
     RawLine innerCode;
+    std::shared_ptr<RawToken> rawToken;
   public:
-    If(std::string lab, RawLine code);
+    If(RawToken rToken, RawLine code);
     bool setCond(int32_t val);
     bool shouldExpand();
     std::string getLabel();
@@ -40,8 +42,9 @@ class Equ {
     RawToken token;
     std::string label;
     int32_t value;
+    std::shared_ptr<RawToken> rawToken;
   public:
-    Equ(std::string label, int32_t v);
+    Equ(RawToken rToken, int32_t v);
     int32_t getValue();
     std::string getLabel();
     RawToken expand();
@@ -59,6 +62,9 @@ class PreProcessor {
   public:
     PreProcessor(std::vector<RawLine> l);
     std::vector<RawLine> getPreProcessedLines();
+    std::vector<Macro> getMdt();
+    std::vector<If> getConditionals();
+    std::vector<Equ> getVals();
 };
 
 
