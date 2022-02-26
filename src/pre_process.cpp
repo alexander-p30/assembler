@@ -49,6 +49,7 @@ If::If(RawToken rToken, RawLine code) {
   rawToken = std::make_shared<RawToken>(rToken);
   innerCode = code;
   label = rawToken->text;
+  cond = false;
 }
 
 bool If::setCond(int32_t val) { return cond = val; }
@@ -81,7 +82,7 @@ RawToken Equ::expand() { return token; }
  *         PreProcessor        *
  *******************************/
 
-PreProcessor::PreProcessor(std::vector<RawLine> l) {
+PreProcessor::PreProcessor(std::vector<RawLine> l, bool shouldProcessMacros) {
   std::vector<RawLine> directiveFreeLines;
   lines = l;
 

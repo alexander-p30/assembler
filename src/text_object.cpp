@@ -104,7 +104,7 @@ RawToken RawLine::nextRawToken() {
  * Returns if the current token is the rawLine's last.
  */
 bool RawLine::isAtLastToken() {
-  return (currentRawTokenIndex + 1) == rawTokens.size();
+  return (currentRawTokenIndex + 1) == (int)rawTokens.size();
 };
 
 /*

@@ -1,10 +1,17 @@
 #include "../include/analyze.hpp"
+#include <cstddef>
 #include <map>
 #include <regex>
 
 #define MAX_TOKEN_LENGTH 99
 #define SYMBOL_FORMAT_REGEX "^[A-Z]{1}[A-Z_0-9]*"
 #define VALUE_FORMAT_REGEX "^-?[0-9]*"
+
+void Analyzer::printErrors() {
+  std::for_each(errors.begin(), errors.end(), [](std::shared_ptr<Error> err) {
+    std::cout << err->message() << std::endl;
+  });
+}
 
 PreProcessorAnalyzer::PreProcessorAnalyzer(std::shared_ptr<PreProcessor> pp) {
   preProcessor = pp;
@@ -43,6 +50,7 @@ std::vector<std::shared_ptr<Error>> MacroAnalyzer::analyze() {
     }
   }
 
+  printErrors();
   return errors;
 }
 
@@ -87,6 +95,7 @@ std::vector<std::shared_ptr<Error>> DirectiveAnalyzer::analyze() {
     }
   }
 
+  printErrors();
   return errors;
 }
 
@@ -125,6 +134,7 @@ std::vector<std::shared_ptr<Error>> LexicalAnalyzer::analyze() {
     }
   }
 
+  printErrors();
   return errors;
 }
 
@@ -171,7 +181,7 @@ std::shared_ptr<SyntacticalError> scanRepeatedSymbolDefinition(
 std::shared_ptr<SyntacticalError> scanInstructionArgumentsError(
     std::vector<std::shared_ptr<Token>> tokens
     ) {
-  std::map<std::string, int32_t> instructionArgumentCount = {
+  std::map<std::string, size_t> instructionArgumentCount = {
     {"ADD", 1}, {"SUB", 1}, {"MULT", 1}, {"DIV", 1}, {"JMP", 1}, {"JMPN", 1}, {"JMPP", 1}, 
     {"JMPZ", 1}, {"COPY", 2}, {"LOAD", 1}, {"STORE", 1}, {"INPUT", 1}, {"OUTPUT", 1}, {"STOP", 0}
   };
@@ -214,6 +224,7 @@ std::vector<std::shared_ptr<Error>> SyntacticalAnalyzer::analyze() {
     maybeAddError(scanInstructionArgumentsError(tokens));
   }
 
+  printErrors();
   return errors;
 }
 
@@ -273,6 +284,7 @@ std::vector<std::shared_ptr<Error>> SemanticAnalyzer::analyze() {
     maybeAddError(scanDuplicateSymbolDefinition(symbolDef, &symbolDefinitions));
   }
 
+  printErrors();
   return errors;
 }
 

@@ -12,6 +12,7 @@
 class Analyzer {
   protected:
     std::vector<std::shared_ptr<Error>> errors;
+    void printErrors();
   public:
     virtual std::vector<std::shared_ptr<Error>> analyze() = 0;
 };

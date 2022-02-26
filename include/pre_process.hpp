@@ -61,7 +61,7 @@ class PreProcessor {
     std::vector<If>::iterator findConditional(std::string label);
     std::vector<Equ>::iterator findVal(std::string label);
   public:
-    PreProcessor(std::vector<RawLine> l);
+    PreProcessor(std::vector<RawLine> lines, bool shouldProcessMacros);
     std::vector<RawLine> getLines();
     std::vector<RawLine> getPreProcessedLines();
     std::vector<Macro> getMdt();
