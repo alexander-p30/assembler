@@ -33,6 +33,7 @@ class TwoPassAssembler {
     TwoPassAssembler(PreProcessor * p, Address baseAddress);
     std::vector<ProgramLine> getFirstPassProgramLines();
     std::vector<ProgramLine> getSecondPassProgramLines();
+    std::vector<std::shared_ptr<SymbolDefinition>> getSymbolDefinitionTable();
     std::vector<std::vector<int32_t>> getAsm();
 };
 

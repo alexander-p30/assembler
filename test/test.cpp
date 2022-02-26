@@ -48,14 +48,17 @@ std::cout << text << std::endl;
   TwoPassAssembler asmer = TwoPassAssembler(&pp, addr);
 
   int i = 0;
-  auto lines = pp.getPreProcessedLines();
-  std::for_each(lines.begin(), lines.end(), [&i](RawLine pl) {
-      inspect(pl, 0);
-  });
+  /* auto lines = pp.getPreProcessedLines(); */
+  /* std::for_each(lines.begin(), lines.end(), [&i](RawLine pl) { */
+  /*     inspect(pl, 0); */
+  /* }); */
+  auto lines = asmer.getSecondPassProgramLines();
+
+  for(auto l = lines.begin(); l != lines.end(); ++l)
+    l->inspect(0);
 
   MacroAnalyzer macroAnlz = MacroAnalyzer(std::make_shared<PreProcessor>(pp));
   std::vector<std::shared_ptr<Error>> macroErrors = macroAnlz.analyze();
-  std::cout << "MACRO: " << macroErrors.size() << std::endl;
   std::for_each(macroErrors.begin(), macroErrors.end(), [](std::shared_ptr<Error> err) {
       std::cout << err->message() << std::endl;
   });
@@ -63,6 +66,24 @@ std::cout << text << std::endl;
   DirectiveAnalyzer directiveAnlz = DirectiveAnalyzer(std::make_shared<PreProcessor>(pp));
   std::vector<std::shared_ptr<Error>> directiveErrors = directiveAnlz.analyze();
   std::for_each(directiveErrors.begin(), directiveErrors.end(), [](std::shared_ptr<Error> err) {
+      std::cout << err->message() << std::endl;
+  });
+
+  LexicalAnalyzer lexicalAnlz = LexicalAnalyzer(std::make_shared<TwoPassAssembler>(asmer));
+  std::vector<std::shared_ptr<Error>> lexicalErrors = lexicalAnlz.analyze();
+  std::for_each(lexicalErrors.begin(), lexicalErrors.end(), [](std::shared_ptr<Error> err) {
+      std::cout << err->message() << std::endl;
+  });
+
+  SyntacticalAnalyzer syntacticalAnlz = SyntacticalAnalyzer(std::make_shared<TwoPassAssembler>(asmer));
+  std::vector<std::shared_ptr<Error>> syntacticalErrors = syntacticalAnlz.analyze();
+  std::for_each(syntacticalErrors.begin(), syntacticalErrors.end(), [](std::shared_ptr<Error> err) {
+      std::cout << err->message() << std::endl;
+  });
+
+  SemanticAnalyzer semanticAnlz = SemanticAnalyzer(std::make_shared<TwoPassAssembler>(asmer));
+  std::vector<std::shared_ptr<Error>> semanticErrors = semanticAnlz.analyze();
+  std::for_each(semanticErrors.begin(), semanticErrors.end(), [](std::shared_ptr<Error> err) {
       std::cout << err->message() << std::endl;
   });
 

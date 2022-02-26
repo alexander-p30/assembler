@@ -1,4 +1,10 @@
 #include "../include/analyze.hpp"
+#include <map>
+#include <regex>
+
+#define MAX_TOKEN_LENGTH 99
+#define SYMBOL_FORMAT_REGEX "^[A-Z]{1}[A-Z_0-9]*"
+#define VALUE_FORMAT_REGEX "^-?[0-9]*"
 
 PreProcessorAnalyzer::PreProcessorAnalyzer(std::shared_ptr<PreProcessor> pp) {
   preProcessor = pp;
@@ -84,21 +90,189 @@ std::vector<std::shared_ptr<Error>> DirectiveAnalyzer::analyze() {
   return errors;
 }
 
-LexicalAnalyzer::LexicalAnalyzer(std::shared_ptr<PreProcessor> pp) : PreProcessorAnalyzer(pp) { }
+bool isAValidToken(std::shared_ptr<Token> token) {
+  std::string tokenType = token->_name();
+
+  if(tokenType == "SymbolDefinition" || tokenType == "Symbol") {
+    bool appropriateLength = token->getText().size() <= MAX_TOKEN_LENGTH;
+    bool allowedCharactersOnly = std::regex_match(token->getText(), std::regex(SYMBOL_FORMAT_REGEX));
+
+    return appropriateLength && allowedCharactersOnly;
+  } else if(tokenType == "Value") {
+    bool numberOnly = std::regex_match(token->getText(), std::regex(VALUE_FORMAT_REGEX));
+    return numberOnly;
+  }
+
+
+  return true;
+}
+
+LexicalAnalyzer::LexicalAnalyzer(std::shared_ptr<TwoPassAssembler> pp) : TwoPassAssemblerAnalyzer(pp) { }
 
 std::vector<std::shared_ptr<Error>> LexicalAnalyzer::analyze() {
+  std::vector<ProgramLine> lines = twoPassAssembler->getFirstPassProgramLines();
+
+  for(auto line = lines.begin(); line != lines.end(); ++line) {
+    std::vector<std::shared_ptr<Token>> tokens = line->getTokens();
+
+    for(auto token = tokens.begin(); token != tokens.end(); ++token) {
+      if(!isAValidToken(*token)) {
+        std::shared_ptr<LexicalError> err{ 
+          new LexicalError(*token, "token invalido.") 
+        };
+        errors.push_back(err);
+      }
+    }
+  }
+
   return errors;
 }
 
+bool isSymbolDef(std::shared_ptr<Token> t) { return t->_name() == "SymbolDefinition"; }
+
 SyntacticalAnalyzer::SyntacticalAnalyzer(std::shared_ptr<TwoPassAssembler> asmer) : TwoPassAssemblerAnalyzer(asmer) { }
 
+std::shared_ptr<SyntacticalError> scanMultipleSymbolDefinitionError(
+    std::vector<std::shared_ptr<Token>> tokens
+    ) {
+    int32_t symbolDefinitionCount = std::count_if(tokens.begin(), tokens.end(), 
+        [](std::shared_ptr<Token> t) { return isSymbolDef(t); });
+
+    if(symbolDefinitionCount > 1) {
+      std::shared_ptr<Token> lastSymbolDef = *std::find_if(tokens.rbegin(), tokens.rend(), 
+          [](std::shared_ptr<Token> t) { return isSymbolDef(t); });
+
+      return std::shared_ptr<SyntacticalError>{
+        new SyntacticalError(lastSymbolDef, "mais de um rotulo na mesma linha.")
+      };
+    }
+
+  return nullptr;
+}
+
+std::shared_ptr<SyntacticalError> scanRepeatedSymbolDefinition(
+    std::vector<std::shared_ptr<Token>> tokens
+    ) {
+    int32_t symbolDefinitionCount = std::count_if(tokens.begin(), tokens.end(), 
+        [](std::shared_ptr<Token> t) { return isSymbolDef(t); });
+
+    if(symbolDefinitionCount > 1) {
+      std::shared_ptr<Token> lastSymbolDef = *std::find_if(tokens.rbegin(), tokens.rend(), 
+          [](std::shared_ptr<Token> t) { return isSymbolDef(t); });
+
+      return std::shared_ptr<SyntacticalError>{
+        new SyntacticalError(lastSymbolDef, "mais de um rotulo na mesma linha.")
+      };
+    }
+
+  return nullptr;
+}
+
+std::shared_ptr<SyntacticalError> scanInstructionArgumentsError(
+    std::vector<std::shared_ptr<Token>> tokens
+    ) {
+  std::map<std::string, int32_t> instructionArgumentCount = {
+    {"ADD", 1}, {"SUB", 1}, {"MULT", 1}, {"DIV", 1}, {"JMP", 1}, {"JMPN", 1}, {"JMPP", 1}, 
+    {"JMPZ", 1}, {"COPY", 2}, {"LOAD", 1}, {"STORE", 1}, {"INPUT", 1}, {"OUTPUT", 1}, {"STOP", 0}
+  };
+
+  for(auto token = tokens.begin(); token != tokens.end(); ++token) {
+    std::shared_ptr<Token> t = *token;
+
+    if(t->_name() != "Instruction")
+      continue;
+
+    std::vector<std::shared_ptr<Token>> lineInstructionSection(token, tokens.end());
+
+    if(lineInstructionSection.size() != instructionArgumentCount[t->getText()] + 1)
+      return std::shared_ptr<SyntacticalError>(
+          new SyntacticalError(t, "instrucao com quantidade errada de operandos.")
+        );
+
+    return nullptr;
+  }
+
+  return nullptr;
+}
+
+bool SyntacticalAnalyzer::maybeAddError(std::shared_ptr<Error> err) {
+  if(err != nullptr) {
+    errors.push_back(err);
+    return true;
+  }
+
+  return false;
+}
+
 std::vector<std::shared_ptr<Error>> SyntacticalAnalyzer::analyze() {
+  std::vector<ProgramLine> lines = twoPassAssembler->getSecondPassProgramLines();
+
+  for(auto line = lines.begin(); line != lines.end(); ++line) {
+    std::vector<std::shared_ptr<Token>> tokens = line->getTokens();
+
+    maybeAddError(scanMultipleSymbolDefinitionError(tokens));
+    maybeAddError(scanInstructionArgumentsError(tokens));
+  }
+
   return errors;
 }
 
 SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<TwoPassAssembler> asmer) : TwoPassAssemblerAnalyzer(asmer) { }
 
+bool SemanticAnalyzer::maybeAddError(std::shared_ptr<Error> err) {
+  if(err != nullptr) {
+    errors.push_back(err);
+    return true;
+  }
+
+  return false;
+}
+
+std::shared_ptr<SemanticError> scanMissingDefinition(std::shared_ptr<Token> token) {
+  if(token->_name() != "Symbol")
+    return nullptr;
+
+  std::shared_ptr<Symbol> symbol = std::dynamic_pointer_cast<Symbol>(token);
+  if(!(symbol->isDefined()))
+    return std::shared_ptr<SemanticError>( new SemanticError(symbol, "simbolo nao declarado") );
+
+  return nullptr;
+}
+
+std::shared_ptr<SemanticError> scanDuplicateSymbolDefinition(
+    std::vector<std::shared_ptr<SymbolDefinition>>::reverse_iterator symbolDefIt,
+    std::vector<std::shared_ptr<SymbolDefinition>> * symbolDefinitions
+    ) {
+  int32_t symbolDefOccurenceCount = std::count_if(symbolDefIt, symbolDefinitions->rend(), 
+      [symbolDefIt](std::shared_ptr<SymbolDefinition> symbolDef) {
+      return symbolDef->getText() == (*symbolDefIt)->getText();
+      });
+
+  if(symbolDefOccurenceCount > 1)
+    return std::shared_ptr<SemanticError>( 
+        new SemanticError(*symbolDefIt, "declaracao repetida.") 
+      );
+
+  return nullptr;
+}
+
 std::vector<std::shared_ptr<Error>> SemanticAnalyzer::analyze() {
+  std::vector<ProgramLine> lines = twoPassAssembler->getSecondPassProgramLines();
+
+  for(auto line = lines.begin(); line != lines.end(); ++line) {
+    std::vector<std::shared_ptr<Token>> tokens = line->getTokens();
+
+    for(auto token = tokens.begin(); token != tokens.end(); ++token)
+      maybeAddError(scanMissingDefinition(*token));
+  }
+
+  std::vector<std::shared_ptr<SymbolDefinition>> symbolDefinitions = 
+    twoPassAssembler->getSymbolDefinitionTable();
+
+  for(auto symbolDef = symbolDefinitions.rbegin(); symbolDef != symbolDefinitions.rend(); ++symbolDef) {
+    maybeAddError(scanDuplicateSymbolDefinition(symbolDef, &symbolDefinitions));
+  }
+
   return errors;
 }
 

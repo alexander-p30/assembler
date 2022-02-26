@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 
+#define VALUE_FORMAT_REGEX "^-?[0-9]*"
+
 bool rawLineHasEmptyLabelDef(RawLine * rawLine) {
   return rawLine->getRawTokens().size() == 1 && IS_LABEL_DEF(rawLine->getRawTokens().front().text);
 }
@@ -26,7 +28,7 @@ bool isRawTokenInstruction(RawToken * t) {
 }
 
 bool isRawTokenValue(RawToken * t) { 
-  return std::all_of(t->text.begin(), t->text.end(), ::isdigit); 
+  return std::regex_match(t->text, std::regex(VALUE_FORMAT_REGEX)); 
 }
 
 std::vector<std::shared_ptr<Token>> TwoPassAssembler::specializeRawTokens(std::vector<RawToken> rawTokens, Address * address) {
@@ -201,4 +203,8 @@ std::vector<ProgramLine> TwoPassAssembler::getFirstPassProgramLines() {
 
 std::vector<ProgramLine> TwoPassAssembler::getSecondPassProgramLines() { 
   return secondPassProgramLines; 
+}
+
+std::vector<std::shared_ptr<SymbolDefinition>> TwoPassAssembler::getSymbolDefinitionTable() { 
+  return symbolDefinitionTable; 
 }

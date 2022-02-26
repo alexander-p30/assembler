@@ -46,19 +46,23 @@ class DirectiveAnalyzer : public PreProcessorAnalyzer {
     std::vector<std::shared_ptr<Error>> analyze();
 };
 
-class LexicalAnalyzer : public PreProcessorAnalyzer {
+class LexicalAnalyzer : public TwoPassAssemblerAnalyzer {
   public:
-    LexicalAnalyzer(std::shared_ptr<PreProcessor> _preProcessor);
+    LexicalAnalyzer(std::shared_ptr<TwoPassAssembler> _preProcessor);
     std::vector<std::shared_ptr<Error>> analyze();
 };
 
 class SyntacticalAnalyzer : public TwoPassAssemblerAnalyzer {
+  private:
+    bool maybeAddError(std::shared_ptr<Error> err);
   public:
     SyntacticalAnalyzer(std::shared_ptr<TwoPassAssembler> _asmer);
     std::vector<std::shared_ptr<Error>> analyze();
 };
 
 class SemanticAnalyzer : public TwoPassAssemblerAnalyzer {
+  private:
+    bool maybeAddError(std::shared_ptr<Error> err);
   public:
     SemanticAnalyzer(std::shared_ptr<TwoPassAssembler> _asmer);
     std::vector<std::shared_ptr<Error>> analyze();

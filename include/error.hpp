@@ -24,7 +24,7 @@ class Error {
 
 class LexicalError : public Error {
   public:
-    LexicalError(std::shared_ptr<RawToken> t, std::string description);
+    LexicalError(std::shared_ptr<Token> t, std::string description);
     std::string message();
 };
 

@@ -14,20 +14,20 @@ Error::Error(std::shared_ptr<RawToken> t, std::string desc) {
 }
 
 std::string Error::locationToString(Location l) {
-  return std::string{"Linha " + std::to_string(l.lineNumber) +
+  return std::string{"LINHA " + std::to_string(l.lineNumber) +
                      ", token na posicao " + std::to_string(l.positionInLine)};
 }
 
 std::string Error::errorTypeString() {
   switch (type) {
   case ErrorType::Undefined:
-    return "desconhecido";
+    return "DESCONHECIDO";
   case ErrorType::Lexical:
-    return "lexico";
+    return "LEXICO";
   case ErrorType::Syntactical:
-    return "sintatico";
+    return "SINTATICO";
   case ErrorType::Semantic:
-    return "semantico";
+    return "SEMANTICO";
   }
 
   return "";
@@ -38,14 +38,14 @@ std::string Error::baseMessage(Location l) {
                      ": "};
 }
 
-LexicalError::LexicalError(std::shared_ptr<RawToken> t, std::string desc)
+LexicalError::LexicalError(std::shared_ptr<Token> t, std::string desc)
     : Error(t, desc) {
   type = ErrorType::Lexical;
 }
 
 std::string LexicalError::message() {
-  return std::string{baseMessage(rawToken->location) + 
-    '"' + rawToken->text + "\" " + description};
+  return std::string{baseMessage(token->getRawToken().location) + 
+    '"' + token->getText() + "\" " + description};
 }
 
 SyntacticalError::SyntacticalError(std::shared_ptr<Token> t, std::string desc)
@@ -85,7 +85,7 @@ SemanticError::SemanticError(std::shared_ptr<Token> t, std::string desc)
 SemanticError::SemanticError(std::shared_ptr<RawToken> t,
                                    std::string desc)
     : Error(t, desc) {
-  type = ErrorType::Syntactical;
+  type = ErrorType::Semantic;
   tokenType = "RawToken";
 }
 
