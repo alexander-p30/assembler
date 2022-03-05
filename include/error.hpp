@@ -18,6 +18,7 @@ class Error {
     ErrorType type;
     std::shared_ptr<Token> token;
     std::shared_ptr<RawToken> rawToken;
+    Location getLocation();
     std::string description;
     virtual std::string message() = 0;
 };

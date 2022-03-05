@@ -5,11 +5,6 @@
 #include <map>
 #include <cstdint>
 
-#define LINE_DEFINES_MACRO(line) line->getRawTokens().size() == 2 && line->getRawTokens()[1].text == "MACRO"
-#define LINE_ENDS_MACRO(line) line.getRawTokens().size() == 1 && line.getRawTokens()[0].text == "ENDMACRO"
-#define LINE_DEFINES_CONDITIONAL(line) line->getRawTokens().size() == 2 && line->getRawTokens()[0].text == "IF"
-#define LINE_DEFINES_EQU(line) line->getRawTokens().size() == 3 && line->getRawTokens()[1].text == "EQU"
-
 class Macro {
   private:
     std::string label;
@@ -64,6 +59,7 @@ class PreProcessor {
     PreProcessor(std::vector<RawLine> lines, bool shouldProcessMacros);
     std::vector<RawLine> getLines();
     std::vector<RawLine> getPreProcessedLines();
+    std::string getPreProcessedText();
     std::vector<Macro> getMdt();
     std::vector<If> getConditionals();
     std::vector<Equ> getVals();

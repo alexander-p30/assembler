@@ -50,7 +50,6 @@ std::vector<std::shared_ptr<Error>> MacroAnalyzer::analyze() {
     }
   }
 
-  printErrors();
   return errors;
 }
 
@@ -95,7 +94,6 @@ std::vector<std::shared_ptr<Error>> DirectiveAnalyzer::analyze() {
     }
   }
 
-  printErrors();
   return errors;
 }
 
@@ -134,7 +132,6 @@ std::vector<std::shared_ptr<Error>> LexicalAnalyzer::analyze() {
     }
   }
 
-  printErrors();
   return errors;
 }
 
@@ -193,10 +190,17 @@ std::shared_ptr<SyntacticalError> scanInstructionArgumentsError(
       continue;
 
     std::vector<std::shared_ptr<Token>> lineInstructionSection(token, tokens.end());
+    std::string instruction = t->getText();
 
-    if(lineInstructionSection.size() != instructionArgumentCount[t->getText()] + 1)
+    if(lineInstructionSection.size() != instructionArgumentCount[instruction] + 1)
       return std::shared_ptr<SyntacticalError>(
-          new SyntacticalError(t, "instrucao com quantidade errada de operandos.")
+          new SyntacticalError(t, 
+            "instrucao com quantidade errada de operandos (" + 
+              instruction + 
+              " aceita " + 
+              std::to_string(instructionArgumentCount[instruction]) + 
+              " operandos)."
+            )
         );
 
     return nullptr;
@@ -224,7 +228,6 @@ std::vector<std::shared_ptr<Error>> SyntacticalAnalyzer::analyze() {
     maybeAddError(scanInstructionArgumentsError(tokens));
   }
 
-  printErrors();
   return errors;
 }
 
@@ -284,7 +287,6 @@ std::vector<std::shared_ptr<Error>> SemanticAnalyzer::analyze() {
     maybeAddError(scanDuplicateSymbolDefinition(symbolDef, &symbolDefinitions));
   }
 
-  printErrors();
   return errors;
 }
 

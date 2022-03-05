@@ -3,6 +3,7 @@
 #include <tuple>
 #include <vector>
 #include <memory>
+#include <sstream>
 
 #define VALUE_FORMAT_REGEX "^-?[0-9]*"
 
@@ -189,13 +190,34 @@ void TwoPassAssembler::assembleLine(ProgramLine programLine) {
   _asm.push_back(lineAsm);
 }
 
-TwoPassAssembler::TwoPassAssembler(PreProcessor * p, Address baseAddress) {
+TwoPassAssembler::TwoPassAssembler(std::shared_ptr<PreProcessor> p, Address baseAddress) {
   preProcessor = p;
   firstPass(baseAddress);
   secondPass(baseAddress);
 }
 
 std::vector<std::vector<int32_t>> TwoPassAssembler::getAsm() { return _asm; }
+
+std::string TwoPassAssembler::getAsmText() {
+  std::vector<std::string> asmCodes;
+
+  for(auto asmLine = _asm.begin(); asmLine != _asm.end(); ++asmLine) {
+    for(auto asmCode = asmLine->begin(); asmCode != asmLine->end(); ++asmCode) {
+      asmCodes.push_back(std::to_string(*asmCode));
+    }
+  }
+
+  std::ostringstream asmText;
+  const char * const delim = " ";
+
+  std::copy(
+      asmCodes.begin(), 
+      asmCodes.end(), 
+      std::ostream_iterator<std::string>(asmText, delim)
+      );
+
+  return asmText.str();
+}
 
 std::vector<ProgramLine> TwoPassAssembler::getFirstPassProgramLines() { 
   return firstPassProgramLines; 

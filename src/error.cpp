@@ -43,6 +43,14 @@ LexicalError::LexicalError(std::shared_ptr<Token> t, std::string desc)
   type = ErrorType::Lexical;
 }
 
+Location Error::getLocation() {
+  if(rawToken != nullptr) {
+    return rawToken->location;
+  }
+
+  return token->getRawToken().location;
+}
+
 std::string LexicalError::message() {
   return std::string{baseMessage(token->getRawToken().location) + 
     '"' + token->getText() + "\" " + description};

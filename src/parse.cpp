@@ -26,6 +26,8 @@ std::vector<RawLine> splitRawLines(std::string text, Location baseLocation) {
 
     auto nextIterator = std::next(i, 1);
     if (rawLineHasEmptyLabelDef(rawLine) && nextIterator != end) {
+      currentLocation.positionInLine = 0;
+      currentLocation.lineNumber++;
       std::string labelAndDefinition = i->str() + " " + nextIterator->str();
       rawLine = RawLine(labelAndDefinition, currentLocation);
       rawLines.push_back(rawLine);

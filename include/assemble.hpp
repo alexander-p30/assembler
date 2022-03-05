@@ -19,7 +19,7 @@ class ProgramLine {
 
 class TwoPassAssembler {
   private:
-    PreProcessor * preProcessor;
+    std::shared_ptr<PreProcessor> preProcessor;
     std::vector<std::shared_ptr<SymbolDefinition>> symbolDefinitionTable;
     std::vector<ProgramLine> firstPassProgramLines;
     std::vector<ProgramLine> secondPassProgramLines;
@@ -30,11 +30,12 @@ class TwoPassAssembler {
     std::vector<std::shared_ptr<Token>> specializeRawTokens(std::vector<RawToken> rawTokens, Address * address);
     std::vector<std::shared_ptr<SymbolDefinition>>::iterator findSymbolDefinition(std::string label);
   public:
-    TwoPassAssembler(PreProcessor * p, Address baseAddress);
+    TwoPassAssembler(std::shared_ptr<PreProcessor> p, Address baseAddress);
     std::vector<ProgramLine> getFirstPassProgramLines();
     std::vector<ProgramLine> getSecondPassProgramLines();
     std::vector<std::shared_ptr<SymbolDefinition>> getSymbolDefinitionTable();
     std::vector<std::vector<int32_t>> getAsm();
+    std::string getAsmText();
 };
 
 #endif

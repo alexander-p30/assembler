@@ -1,9 +1,13 @@
 #include "../include/pre_process.hpp"
 #include <algorithm>
+#include <iterator>
 #include <tuple>
-#include <iostream>
+#include <sstream>
 
-using std::cout;
+#define LINE_DEFINES_MACRO(line) line->getRawTokens().size() == 2 && line->getRawTokens()[1].text == "MACRO"
+#define LINE_ENDS_MACRO(line) line.getRawTokens().size() == 1 && line.getRawTokens()[0].text == "ENDMACRO"
+#define LINE_DEFINES_CONDITIONAL(line) line->getRawTokens().size() == 2 && line->getRawTokens()[0].text == "IF"
+#define LINE_DEFINES_EQU(line) line->getRawTokens().size() == 3 && line->getRawTokens()[1].text == "EQU"
 
 Macro buildMacro(std::vector<RawLine>::iterator macroStart, 
     std::vector<RawLine>::iterator macroEnd, bool hasEnd) {
@@ -89,7 +93,7 @@ PreProcessor::PreProcessor(std::vector<RawLine> l, bool shouldProcessMacros) {
   for(auto rLine = l.begin(); rLine != l.end(); ++rLine) {
     std::vector<RawToken> lineRawTokens = rLine->getRawTokens();
 
-    if(LINE_DEFINES_MACRO(rLine)) {
+    if(LINE_DEFINES_MACRO(rLine) && shouldProcessMacros) {
       auto macroEnd = std::find_if(rLine, l.end(), [](RawLine rl) { 
         return LINE_ENDS_MACRO(rl);
       });
@@ -98,8 +102,11 @@ PreProcessor::PreProcessor(std::vector<RawLine> l, bool shouldProcessMacros) {
 
       Macro macro = buildMacro(rLine, macroEnd, hasEnd);
       mdt.push_back(macro);
-      if(macro.hasEnd())
+
+
+      if(macro.hasEnd()) {
         rLine = macroEnd;
+      }
     } else if(LINE_DEFINES_EQU(rLine)) {
       vals.push_back(buildEqu(*rLine));
     } else if(LINE_DEFINES_CONDITIONAL(rLine)) {
@@ -129,8 +136,6 @@ PreProcessor::PreProcessor(std::vector<RawLine> l, bool shouldProcessMacros) {
         if(conditional->shouldExpand()) {
           preProcessedLinesAux.push_back(conditional->expand());
         }
-      } else {
-        preProcessedLinesAux.push_back(*rLine);
       }
     } else if(lineRawTokens.size() == 1) {
       std::string tokenLabel = lineRawTokens.front().text;
@@ -182,6 +187,31 @@ std::vector<Equ>::iterator PreProcessor::findVal(std::string valToken) {
 std::vector<RawLine> PreProcessor::getLines() { return lines; }
 
 std::vector<RawLine> PreProcessor::getPreProcessedLines() { return preProcessedLines; }
+
+std::string PreProcessor::getPreProcessedText() {
+  std::vector<std::string> preProcessedWords;
+
+  for(auto line = preProcessedLines.begin(); line != preProcessedLines.end(); ++line) {
+    std::vector<RawToken> tokens = line->getRawTokens();
+
+    for(auto t = tokens.begin(); t != tokens.end(); ++t) {
+      preProcessedWords.push_back(t->text);
+    }
+
+    preProcessedWords.push_back("\n");
+  }
+
+  std::ostringstream preProcessedText;
+  const char * const delim = " ";
+
+  std::copy(
+      preProcessedWords.begin(), 
+      preProcessedWords.end(), 
+      std::ostream_iterator<std::string>(preProcessedText, delim)
+      );
+
+  return preProcessedText.str();
+}
 
 std::vector<Macro> PreProcessor::getMdt() { return mdt; }
 
